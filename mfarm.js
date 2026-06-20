@@ -58,7 +58,6 @@ function createFarmBot() {
   let farmTimer = null;
 
   // ── Clicking ────────────────────────────────────────────────────────────
-    
     const pos = bot.entity.position.floored();
     for (let x = 1; x <= 5; x++) {
       const block = bot.blockAt(pos.offset(-x, 2, 0));
