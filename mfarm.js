@@ -96,7 +96,6 @@ function createFarmBot() {
   async function digBlock(block) {
     digging = true;
     try {
-      await bot.look(DIG_YAW, 0, true); // lock yaw once, right before the dig — not every tick
       await Promise.race([
         bot.dig(block),
         new Promise((_, reject) => setTimeout(() => reject(new Error('dig timed out')), 2000))
