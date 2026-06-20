@@ -75,8 +75,8 @@ function createFarmBot() {
     const pos = bot.entity.position.floored();
     const eye = bot.entity.position.offset(0, EYE_HEIGHT, 0);
 
-    for (let x = 1; x <= 5; x+) {
-      const blockPos = pos.offset(x, 2, 0);
+    for (let x = 1; x <= 5; x++) {
+      const blockPos = pos.offset(x, 1, 0);
       const block = bot.blockAt(blockPos);
       if (!block || block.name !== 'potatoes' || block.metadata !== 7) continue;
 
@@ -92,14 +92,12 @@ function createFarmBot() {
 
   async function digBlock(block) {
     digging = true;
-    console.log(`🥔 Ripe potato at ${block.position} — digging...`);
     try {
       await bot.lookAt(block.position.offset(0.5, 0.5, 0.5), true);
       await Promise.race([
         bot.dig(block),
         new Promise((_, reject) => setTimeout(() => reject(new Error('dig timed out')), 2000))
       ]);
-      console.log(`✅ Broke potato at ${block.position}`);
     } catch (err) {
       console.log(`⚠️ Dig failed at ${block.position}:`, err.message);
     } finally {
