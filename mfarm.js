@@ -90,14 +90,21 @@ function createFarmBot() {
     }
   }
 
-  function digBlock(block) {
+  async function digBlock(block) {
     digging = true;
-    bot.lookAt(block.position.offset(0.5, 0.5, 0.5), true, () => {
-      bot.dig(block, err => {
-        digging = false;
-        if (err) console.log(`⚠️ Dig failed at ${block.position}:`, err.message);
-      });
-    });
+    console.log(`🥔 Ripe potato at ${block.position} — digging...`);
+    try {
+      await bot.lookAt(block.position.offset(0.5, 0.5, 0.5), true);
+      await Promise.race([
+        bot.dig(block),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('dig timed out')), 2000))
+      ]);
+      console.log(`✅ Broke potato at ${block.position}`);
+    } catch (err) {
+      console.log(`⚠️ Dig failed at ${block.position}:`, err.message);
+    } finally {
+      digging = false; // always release the lock, success or failure
+    }
   }
 
   function startClicking() {
