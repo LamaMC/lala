@@ -51,7 +51,35 @@ function createFarmBot() {
     let lastPos = null;
     let pingPaused = false;
     let regrowing = false;
+    let brokenBlocks = new Set();
     let farmTimer = null;
+
+    // ── Digging / Potato Detection ───────────────────────────────────────────
+    function onTick() {
+      if (!alive || !farmingActive || pingPaused || regrowing) return;
+
+      const pos = bot.entity.position.floored();
+      for (let x = 1; x <= 5; x++) {
+        const block = bot.blockAt(pos.offset(-x, 2, 0));
+        if (block && block.name === 'potatoes') {
+          const key = `${block.position.x},${block.position.y},${block.position.z}`;
+          if (brokenBlocks.has(key)) continue;
+          bot._client.write('block_dig', { status: 0, location: block.position, face: 1 });
+          bot._client.write('block_dig', { status: 2, location: block.position, face: 1 });
+          brokenBlocks.add(key);
+          return;
+        }
+      }
+    }
+
+    function startClicking() {
+      bot.on('physicsTick', onTick);
+      console.log('🖱️ Digging loop started.');
+    }
+
+    function stopClicking() {
+      bot.removeListener('physicsTick', onTick);
+    }
 
     // ── GUI / warp ──────────────────────────────────────────────────────────
     function openTeleportGUI() {
@@ -84,10 +112,12 @@ function createFarmBot() {
       if (farmingActive) return;
       farmingActive = true;
       regrowing = false;
+      brokenBlocks.clear();
 
       bot.setQuickBarSlot(0);
       console.log('🌾 Farming movement started.');
 
+      startClicking();
       setMoveDirection('right');
 
       // 30-minute farm timer → hand off to regrow mode
@@ -103,6 +133,12 @@ function createFarmBot() {
         bot.setControlState('forward', true);
         setTimeout(() => bot.setControlState('forward', false), 100);
       }, 10000);
+
+      // Clear broken blocks memory every 5 minutes
+      const clearBroken = setInterval(() => {
+        if (!alive || !farmingActive) { clearInterval(clearBroken); return; }
+        brokenBlocks.clear();
+      }, 5 * 60 * 1000);
 
       // Wait 3s for bot to settle after warp before starting polls
       setTimeout(() => {
@@ -156,6 +192,7 @@ function createFarmBot() {
       bot.setControlState('right', false);
       bot.setControlState('left', false);
       bot.setControlState('forward', false);
+      stopClicking();
     }
 
     function stopFarming() {
