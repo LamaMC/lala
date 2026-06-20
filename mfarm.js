@@ -76,7 +76,13 @@ function createFarmBot() {
 
   // ── Clicking ────────────────────────────────────────────────────────────
   function onTick() {
-    if (!alive || !farmingActive || pingPaused || regrowing || digging) return;
+    if (!alive || !farmingActive || pingPaused || regrowing) return;
+
+    // POV stays pinned at -90/6.4 the whole time it's farming, every tick —
+    // not just when a dig fires — so nudging/strafing can't knock it off.
+    bot.look(DIG_YAW, DIG_PITCH, true);
+
+    if (digging) return; // already mid-dig, don't start another
 
     const pos = bot.entity.position.floored();
     const eye = bot.entity.position.offset(0, EYE_HEIGHT, 0);
@@ -99,7 +105,6 @@ function createFarmBot() {
   async function digBlock(block) {
     digging = true;
     try {
-      await bot.look(DIG_YAW, DIG_PITCH, true);
       await Promise.race([
         bot.dig(block),
         new Promise((_, reject) => setTimeout(() => reject(new Error('dig timed out')), 2000))
