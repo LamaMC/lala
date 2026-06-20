@@ -53,7 +53,6 @@ function createFarmBot() {
   let lastPos = null;
   let pingPaused = false;
   let regrowing = false;
-  let brokenBlocks = new Set();
   let farmTimer = null;
 
   // ── Clicking ────────────────────────────────────────────────────────────
@@ -65,11 +64,8 @@ function createFarmBot() {
     for (let x = 1; x <= 5; x++) {
       const block = bot.blockAt(pos.offset(-x, 2, 0));
       if (block && block.name === 'potatoes' && block.metadata === 7) {
-        const key = `${block.position.x},${block.position.y},${block.position.z}`;
-        if (brokenBlocks.has(key)) continue;
         bot._client.write('block_dig', { status: 0, location: block.position, face: 1 });
         bot._client.write('block_dig', { status: 2, location: block.position, face: 1 });
-        brokenBlocks.add(key);
         return;
       }
     }
@@ -116,7 +112,6 @@ function createFarmBot() {
     if (farmingActive) return;
     farmingActive = true;
     regrowing = false;
-    brokenBlocks.clear();
 
     bot.setQuickBarSlot(0);
     bot.look(-Math.PI / 2, 0, true);
@@ -139,12 +134,6 @@ function createFarmBot() {
       bot.setControlState('forward', true);
       setTimeout(() => bot.setControlState('forward', false), 100);
     }, 10000);
-
-    // Clear broken blocks every 5 minutes
-    const clearBroken = setInterval(() => {
-      if (!alive || !farmingActive) { clearInterval(clearBroken); return; }
-      brokenBlocks.clear();
-    }, 5 * 60 * 1000);
 
     // Wait 3s for bot to settle after warp before starting polls
     setTimeout(() => {
