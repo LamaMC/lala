@@ -21,11 +21,9 @@ const REGROW_ACCOUNT = { username: 'LamaMC',   loginCommand: '/login 3195' };
 // Anyone mentioning either name in chat counts as a "ping"
 const PING_NAMES = [FARM_ACCOUNT.username, REGROW_ACCOUNT.username];
 
-// Digging look angle, taken straight from the F3 debug screen (yaw / pitch, in degrees)
-// while standing on the row and looking at a ripe potato: Facing east (-90.0 / 6.4).
-// bot.look() takes radians, so these are converted once here.
-const DIG_YAW   = -90.0 * Math.PI / 180; // -90°, facing east (+X)
-const DIG_PITCH =   6.4 * Math.PI / 180; // 6.4°, slight downward tilt
+// Locked facing direction while farming: yaw -90° (east, +X), pitch left at
+// default (level / 0). bot.look() takes radians, so converted once here.
+const DIG_YAW = -90.0 * Math.PI / 180;
 
 const FARM_DURATION_MS   = 30 * 60 * 1000; // farm for 30 min, then hand off to regrow
 const REGROW_DURATION_MS = 10 * 60 * 1000; // sit in the afk pool for 10 min, then hand back
@@ -78,9 +76,9 @@ function createFarmBot() {
   function onTick() {
     if (!alive || !farmingActive || pingPaused || regrowing) return;
 
-    // POV stays pinned at -90/6.4 the whole time it's farming, every tick —
-    // not just when a dig fires — so nudging/strafing can't knock it off.
-    bot.look(DIG_YAW, DIG_PITCH, true);
+    // POV stays pinned at yaw -90° / default pitch the whole time it's farming,
+    // every tick — not just when a dig fires — so nudging/strafing can't knock it off.
+    bot.look(DIG_YAW, 0, true);
 
     if (digging) return; // already mid-dig, don't start another
 
