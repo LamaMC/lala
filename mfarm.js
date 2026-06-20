@@ -75,8 +75,8 @@ function createFarmBot() {
     const pos = bot.entity.position.floored();
     const eye = bot.entity.position.offset(0, EYE_HEIGHT, 0);
 
-    for (let x = 1; x <= 5; x++) {
-      const blockPos = pos.offset(x, -2, 0);
+    for (let x = 1; x <= 5; x+) {
+      const blockPos = pos.offset(x, 2, 0);
       const block = bot.blockAt(blockPos);
       if (!block || block.name !== 'potatoes' || block.metadata !== 7) continue;
 
