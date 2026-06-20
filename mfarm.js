@@ -30,6 +30,18 @@ const PING_AFK_MS        = 5 * 60 * 1000;  // stand still 5 min after a ping, th
 const SHIFT_DETECT_MIN = 4;
 const SHIFT_DETECT_MAX = 256;
 
+// Digging reach — vanilla survival interaction range is ~4.5 blocks. The old code
+// scanned columns up to 5 blocks out (≈5.4 diagonal with the +2 Y offset), which is
+// past legal reach, so the server was silently dropping those dig packets.
+const EYE_HEIGHT = 1.62;
+const MAX_DIG_REACH = 4.5;
+
+// System message that signals the patch needs to regrow.
+// ⚠️ TODO: replace this with the EXACT text fakepixel sends for this event.
+// Anchored (^...) so it only matches that specific system line, not any player
+// chat that happens to contain the word "regrow".
+const REGROW_SIGNAL = /^\[SkyBlock\] Your potatoes need time to regrow/i;
+
 // Master switch. Set to false (e.g. by a ping) to fully stop the whole farm/regrow loop.
 // Re-running the script is what "turns it back on".
 let scriptEnabled = true;
@@ -54,21 +66,38 @@ function createFarmBot() {
   let pingPaused = false;
   let regrowing = false;
   let farmTimer = null;
+  let digging = false; // guard against overlapping dig calls across ticks
 
   // ── Clicking ────────────────────────────────────────────────────────────
   function onTick() {
-    if (!alive || !farmingActive || pingPaused || regrowing) return;
-    bot.look(-Math.PI / 2, 0, true);
+    if (!alive || !farmingActive || pingPaused || regrowing || digging) return;
 
     const pos = bot.entity.position.floored();
+    const eye = bot.entity.position.offset(0, EYE_HEIGHT, 0);
+
     for (let x = 1; x <= 5; x++) {
-      const block = bot.blockAt(pos.offset(x, 2, 0));
-      if (block && block.name === 'potatoes' && block.metadata === 7) {
-        bot._client.write('block_dig', { status: 0, location: block.position, face: 1 });
-        bot._client.write('block_dig', { status: 2, location: block.position, face: 1 });
-        return;
-      }
+      const blockPos = pos.offset(x, 2, 0);
+      const block = bot.blockAt(blockPos);
+      if (!block || block.name !== 'potatoes' || block.metadata !== 7) continue;
+
+      // Skip columns out of legal reach instead of firing a dig that'll just
+      // get rejected — fall through and try the next (closer) column.
+      const dist = eye.distanceTo(blockPos.offset(0.5, 0.5, 0.5));
+      if (dist > MAX_DIG_REACH) continue;
+
+      digBlock(block);
+      return;
     }
+  }
+
+  function digBlock(block) {
+    digging = true;
+    bot.lookAt(block.position.offset(0.5, 0.5, 0.5), true, () => {
+      bot.dig(block, err => {
+        digging = false;
+        if (err) console.log(`⚠️ Dig failed at ${block.position}:`, err.message);
+      });
+    });
   }
 
   function startClicking() {
@@ -260,9 +289,9 @@ function createFarmBot() {
     console.log(`💬 [Makhecha] ${msg}`);
     if (!alive) return;
 
-    // "Regrow" typed by anyone immediately starts the handoff
-    if (farmingActive && !regrowing && /regrow/i.test(msg)) {
-      console.log('🥔 "Regrow" keyword seen in chat — triggering regrow mode.');
+    // Regrow signal from the server immediately starts the handoff.
+    if (farmingActive && !regrowing && REGROW_SIGNAL.test(msg)) {
+      console.log('🥔 Regrow signal seen in chat — triggering regrow mode.');
       triggerRegrow('chat keyword');
       return;
     }
