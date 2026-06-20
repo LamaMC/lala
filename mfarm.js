@@ -30,6 +30,9 @@ const PING_AFK_MS        = 5 * 60 * 1000;  // stand still 5 min after a ping, th
 const SHIFT_DETECT_MIN = 4;
 const SHIFT_DETECT_MAX = 256;
 
+// Facing direction: east (towards +X)
+const FACING_YAW = -Math.PI / 2;
+
 // Master switch. Set to false (e.g. by a ping) to fully stop the whole farm/regrow loop.
 // Re-running the script is what "turns it back on".
 let scriptEnabled = true;
@@ -53,44 +56,7 @@ function createFarmBot() {
   let lastPos = null;
   let pingPaused = false;
   let regrowing = false;
-  let brokenBlocks = new Set();
-  let lastSwing = 0;
   let farmTimer = null;
-
-  // ── Clicking ────────────────────────────────────────────────────────────
-  function onTick() {
-    if (!alive || !farmingActive || pingPaused || regrowing) return;
-    bot.look(Math.PI / 2, 0, true);
-
-    const now = Date.now();
-    if (now - lastSwing >= 500) {
-      bot._client.write('animation', { entityId: bot.entity.id, animation: 0 });
-      lastSwing = now;
-    }
-
-    const pos = bot.entity.position.floored();
-    for (let x = 1; x <= 5; x++) {
-      const block = bot.blockAt(pos.offset(-x, 2, 0));
-      if (block && block.name === 'potatoes') {
-        const key = `${block.position.x},${block.position.y},${block.position.z}`;
-        if (brokenBlocks.has(key)) continue;
-        bot._client.write('block_dig', { status: 0, location: block.position, face: 1 });
-        bot._client.write('block_dig', { status: 2, location: block.position, face: 1 });
-        brokenBlocks.add(key);
-        return;
-      }
-    }
-  }
-
-  function startClicking() {
-    bot.setQuickBarSlot(0);
-    bot.on('physicsTick', onTick);
-    console.log('🖱️ Attack started.');
-  }
-
-  function stopClicking() {
-    bot.removeListener('physicsTick', onTick);
-  }
 
   // ── GUI / warp ──────────────────────────────────────────────────────────
   function openTeleportGUI() {
@@ -123,13 +89,11 @@ function createFarmBot() {
     if (farmingActive) return;
     farmingActive = true;
     regrowing = false;
-    brokenBlocks.clear();
 
     bot.setQuickBarSlot(0);
-    bot.look(Math.PI / 2, 0, true);
+    bot.look(FACING_YAW, 0, true);
     console.log('🌾 Farming started.');
 
-    startClicking();
     setMoveDirection('right');
 
     // 30-minute farm timer → hand off to regrow mode
@@ -142,16 +106,10 @@ function createFarmBot() {
     const nudgeInterval = setInterval(() => {
       if (!alive || !farmingActive) { clearInterval(nudgeInterval); return; }
       if (pingPaused || regrowing) return;
-      bot.look(Math.PI / 2, 0, true);
+      bot.look(FACING_YAW, 0, true);
       bot.setControlState('forward', true);
       setTimeout(() => bot.setControlState('forward', false), 100);
     }, 10000);
-
-    // Clear broken blocks every 5 minutes
-    const clearBroken = setInterval(() => {
-      if (!alive || !farmingActive) { clearInterval(clearBroken); return; }
-      brokenBlocks.clear();
-    }, 5 * 60 * 1000);
 
     // Wait 3s for bot to settle after warp before starting polls
     setTimeout(() => {
@@ -199,14 +157,13 @@ function createFarmBot() {
     bot.setControlState('right', false);
     if (dir === 'right') bot.setControlState('right', true);
     else bot.setControlState('left', true);
-    bot.look(Math.PI / 2, 0, true);
+    bot.look(FACING_YAW, 0, true);
   }
 
   function stopAllMovement() {
     bot.setControlState('right', false);
     bot.setControlState('left', false);
     bot.setControlState('forward', false);
-    stopClicking();
   }
 
   function stopFarming() {
