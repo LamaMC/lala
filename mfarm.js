@@ -21,6 +21,12 @@ const REGROW_ACCOUNT = { username: 'LamaMC',   loginCommand: '/login 3195' };
 // Anyone mentioning either name in chat counts as a "ping"
 const PING_NAMES = [FARM_ACCOUNT.username, REGROW_ACCOUNT.username];
 
+// Digging look angle, taken straight from the F3 debug screen (yaw / pitch, in degrees)
+// while standing on the row and looking at a ripe potato: Facing east (-90.0 / 6.4).
+// bot.look() takes radians, so these are converted once here.
+const DIG_YAW   = -90.0 * Math.PI / 180; // -90°, facing east (+X)
+const DIG_PITCH =   6.4 * Math.PI / 180; // 6.4°, slight downward tilt
+
 const FARM_DURATION_MS   = 30 * 60 * 1000; // farm for 30 min, then hand off to regrow
 const REGROW_DURATION_MS = 10 * 60 * 1000; // sit in the afk pool for 10 min, then hand back
 const PING_AFK_MS        = 5 * 60 * 1000;  // stand still 5 min after a ping, then hard-stop
@@ -93,7 +99,7 @@ function createFarmBot() {
   async function digBlock(block) {
     digging = true;
     try {
-      await bot.lookAt(block.position.offset(0.5, 0.5, 0.5), true);
+      await bot.look(DIG_YAW, DIG_PITCH, true);
       await Promise.race([
         bot.dig(block),
         new Promise((_, reject) => setTimeout(() => reject(new Error('dig timed out')), 2000))
