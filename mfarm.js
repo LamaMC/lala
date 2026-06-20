@@ -64,7 +64,7 @@ function createFarmBot() {
     const pos = bot.entity.position.floored();
     for (let x = 1; x <= 5; x++) {
       const block = bot.blockAt(pos.offset(-x, 2, 0));
-      if (block && block.name === 'potatoes') {
+      if (block && block.name === 'potatoes' && block.metadata === 7) {
         const key = `${block.position.x},${block.position.y},${block.position.z}`;
         if (brokenBlocks.has(key)) continue;
         bot._client.write('block_dig', { status: 0, location: block.position, face: 1 });
