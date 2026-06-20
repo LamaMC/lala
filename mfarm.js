@@ -34,11 +34,10 @@ const PING_AFK_MS        = 5 * 60 * 1000;  // stand still 5 min after a ping, th
 const SHIFT_DETECT_MIN = 4;
 const SHIFT_DETECT_MAX = 256;
 
-// Digging reach — vanilla survival interaction range is ~4.5 blocks. The old code
-// scanned columns up to 5 blocks out (≈5.4 diagonal with the +2 Y offset), which is
-// past legal reach, so the server was silently dropping those dig packets.
+// Digging reach. y-offset is now +1, so column 5 sits ~5.1 blocks out —
+// give it a little headroom instead of cutting it off.
 const EYE_HEIGHT = 1.62;
-const MAX_DIG_REACH = 4.5;
+const MAX_DIG_REACH = 5.5;
 
 // System message that signals the patch needs to regrow.
 // ⚠️ TODO: replace this with the EXACT text fakepixel sends for this event.
@@ -74,13 +73,7 @@ function createFarmBot() {
 
   // ── Clicking ────────────────────────────────────────────────────────────
   function onTick() {
-    if (!alive || !farmingActive || pingPaused || regrowing) return;
-
-    // POV stays pinned at yaw -90° / default pitch the whole time it's farming,
-    // every tick — not just when a dig fires — so nudging/strafing can't knock it off.
-    bot.look(DIG_YAW, 0, true);
-
-    if (digging) return; // already mid-dig, don't start another
+    if (!alive || !farmingActive || pingPaused || regrowing || digging) return;
 
     const pos = bot.entity.position.floored();
     const eye = bot.entity.position.offset(0, EYE_HEIGHT, 0);
@@ -103,6 +96,7 @@ function createFarmBot() {
   async function digBlock(block) {
     digging = true;
     try {
+      await bot.look(DIG_YAW, 0, true); // lock yaw once, right before the dig — not every tick
       await Promise.race([
         bot.dig(block),
         new Promise((_, reject) => setTimeout(() => reject(new Error('dig timed out')), 2000))
