@@ -59,7 +59,7 @@ function createFarmBot() {
   // ── Clicking ────────────────────────────────────────────────────────────
   function onTick() {
     if (!alive || !farmingActive || pingPaused || regrowing) return;
-    bot.look(Math.PI / 2, 0, true);
+    bot.look(-Math.PI / 2, 0, true);
 
     const pos = bot.entity.position.floored();
     for (let x = 1; x <= 5; x++) {
@@ -119,7 +119,7 @@ function createFarmBot() {
     brokenBlocks.clear();
 
     bot.setQuickBarSlot(0);
-    bot.look(Math.PI / 2, 0, true);
+    bot.look(-Math.PI / 2, 0, true);
     console.log('🌾 Farming started.');
 
     startClicking();
