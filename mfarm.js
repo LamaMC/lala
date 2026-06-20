@@ -159,7 +159,7 @@ function createFarmBot() {
     const nudgeInterval = setInterval(() => {
       if (!alive || !farmingActive) { clearInterval(nudgeInterval); return; }
       if (pingPaused || regrowing) return;
-      bot.look(Math.PI / 2, 0, true);
+      bot.look(-Math.PI / 2, 0, true); // face east (+X)
       bot.setControlState('forward', true);
       setTimeout(() => bot.setControlState('forward', false), 100);
     }, 10000);
@@ -210,7 +210,7 @@ function createFarmBot() {
     bot.setControlState('right', false);
     if (dir === 'right') bot.setControlState('right', true);
     else bot.setControlState('left', true);
-    bot.look(Math.PI / 2, 0, true);
+    bot.look(-Math.PI / 2, 0, true); // face east (+X)
   }
 
   function stopAllMovement() {
