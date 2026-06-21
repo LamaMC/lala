@@ -162,13 +162,20 @@ function createFarmBot() {
       triggerRegrow('30-minute farm timer');
     }, FARM_DURATION_MS);
 
-    // Nudge forward every 10s
+    // Nudge every 10s — re-pulse the current strafe direction instead of adding
+    // forward. Holding forward + strafe at once is diagonal input; if that vector
+    // isn't capped the same way the server normalizes it, the client predicts
+    // faster-than-allowed movement — speed spike, sprint-FOV kick, rubber-band,
+    // and it can carry the bot off the edge of the platform.
     const nudgeInterval = setInterval(() => {
       if (!alive || !farmingActive) { clearInterval(nudgeInterval); return; }
       if (pingPaused || regrowing) return;
-      bot.look(-Math.PI / 2, 0, true); // face east (+X)
-      bot.setControlState('forward', true);
-      setTimeout(() => bot.setControlState('forward', false), 100);
+      const dir = movingRight ? 'right' : 'left';
+      bot.setControlState(dir, false);
+      setTimeout(() => {
+        if (!alive || !farmingActive || pingPaused || regrowing) return;
+        bot.setControlState(dir, true);
+      }, 100);
     }, 10000);
 
     // Wait 3s for bot to settle after warp before starting polls
