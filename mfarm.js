@@ -21,10 +21,6 @@ const REGROW_ACCOUNT = { username: 'LamaMC',   loginCommand: '/login 3195' };
 // Anyone mentioning either name in chat counts as a "ping"
 const PING_NAMES = [FARM_ACCOUNT.username, REGROW_ACCOUNT.username];
 
-// Locked facing direction while farming: yaw -90° (east, +X), pitch left at
-// default (level / 0). bot.look() takes radians, so converted once here.
-const DIG_YAW = -90.0 * Math.PI / 180;
-
 const FARM_DURATION_MS   = 30 * 60 * 1000; // farm for 30 min, then hand off to regrow
 const REGROW_DURATION_MS = 10 * 60 * 1000; // sit in the afk pool for 10 min, then hand back
 const PING_AFK_MS        = 5 * 60 * 1000;  // stand still 5 min after a ping, then hard-stop
@@ -33,17 +29,6 @@ const PING_AFK_MS        = 5 * 60 * 1000;  // stand still 5 min after a ping, th
 // not a slow walking movement. Tune the upper bound if 5 turns out to be too tight/loose.
 const SHIFT_DETECT_MIN = 4;
 const SHIFT_DETECT_MAX = 256;
-
-// Digging reach. y-offset is now +1, so column 5 sits ~5.1 blocks out —
-// give it a little headroom instead of cutting it off.
-const EYE_HEIGHT = 1.62;
-const MAX_DIG_REACH = 5.5;
-
-// System message that signals the patch needs to regrow.
-// ⚠️ TODO: replace this with the EXACT text fakepixel sends for this event.
-// Anchored (^...) so it only matches that specific system line, not any player
-// chat that happens to contain the word "regrow".
-const REGROW_SIGNAL = /^\[SkyBlock\] Your potatoes need time to regrow/i;
 
 // Master switch. Set to false (e.g. by a ping) to fully stop the whole farm/regrow loop.
 // Re-running the script is what "turns it back on".
@@ -68,42 +53,25 @@ function createFarmBot() {
   let lastPos = null;
   let pingPaused = false;
   let regrowing = false;
+  let brokenBlocks = new Set();
   let farmTimer = null;
-  let digging = false; // guard against overlapping dig calls across ticks
 
   // ── Clicking ────────────────────────────────────────────────────────────
   function onTick() {
-    if (!alive || !farmingActive || pingPaused || regrowing || digging) return;
+    if (!alive || !farmingActive || pingPaused || regrowing) return;
+    bot.look(Math.PI / 2, 0, true);
 
     const pos = bot.entity.position.floored();
-    const eye = bot.entity.position.offset(0, EYE_HEIGHT, 0);
-
     for (let x = 1; x <= 5; x++) {
-      const blockPos = pos.offset(x, 1, 0);
-      const block = bot.blockAt(blockPos);
-      if (!block || block.name !== 'potatoes' || block.metadata !== 7) continue;
-
-      // Skip columns out of legal reach instead of firing a dig that'll just
-      // get rejected — fall through and try the next (closer) column.
-      const dist = eye.distanceTo(blockPos.offset(0.5, 0.5, 0.5));
-      if (dist > MAX_DIG_REACH) continue;
-
-      digBlock(block);
-      return;
-    }
-  }
-
-  async function digBlock(block) {
-    digging = true;
-    try {
-      await Promise.race([
-        bot.dig(block),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('dig timed out')), 2000))
-      ]);
-    } catch (err) {
-      console.log(`⚠️ Dig failed at ${block.position}:`, err.message);
-    } finally {
-      digging = false; // always release the lock, success or failure
+      const block = bot.blockAt(pos.offset(-x, 2, 0));
+      if (block && block.name === 'potatoes') {
+        const key = `${block.position.x},${block.position.y},${block.position.z}`;
+        if (brokenBlocks.has(key)) continue;
+        bot._client.write('block_dig', { status: 0, location: block.position, face: 1 });
+        bot._client.write('block_dig', { status: 2, location: block.position, face: 1 });
+        brokenBlocks.add(key);
+        return;
+      }
     }
   }
 
@@ -148,9 +116,10 @@ function createFarmBot() {
     if (farmingActive) return;
     farmingActive = true;
     regrowing = false;
+    brokenBlocks.clear();
 
     bot.setQuickBarSlot(0);
-    bot.look(-Math.PI / 2, 0, true);
+    bot.look(Math.PI / 2, 0, true);
     console.log('🌾 Farming started.');
 
     startClicking();
@@ -162,21 +131,20 @@ function createFarmBot() {
       triggerRegrow('30-minute farm timer');
     }, FARM_DURATION_MS);
 
-    // Nudge every 10s — re-pulse the current strafe direction instead of adding
-    // forward. Holding forward + strafe at once is diagonal input; if that vector
-    // isn't capped the same way the server normalizes it, the client predicts
-    // faster-than-allowed movement — speed spike, sprint-FOV kick, rubber-band,
-    // and it can carry the bot off the edge of the platform.
+    // Nudge forward every 10s
     const nudgeInterval = setInterval(() => {
       if (!alive || !farmingActive) { clearInterval(nudgeInterval); return; }
       if (pingPaused || regrowing) return;
-      const dir = movingRight ? 'right' : 'left';
-      bot.setControlState(dir, false);
-      setTimeout(() => {
-        if (!alive || !farmingActive || pingPaused || regrowing) return;
-        bot.setControlState(dir, true);
-      }, 100);
+      bot.look(Math.PI / 2, 0, true);
+      bot.setControlState('forward', true);
+      setTimeout(() => bot.setControlState('forward', false), 100);
     }, 10000);
+
+    // Clear broken blocks every 5 minutes
+    const clearBroken = setInterval(() => {
+      if (!alive || !farmingActive) { clearInterval(clearBroken); return; }
+      brokenBlocks.clear();
+    }, 5 * 60 * 1000);
 
     // Wait 3s for bot to settle after warp before starting polls
     setTimeout(() => {
@@ -224,9 +192,7 @@ function createFarmBot() {
     bot.setControlState('right', false);
     if (dir === 'right') bot.setControlState('right', true);
     else bot.setControlState('left', true);
-    // No look() call here — yaw is locked once in startFarming() and nothing
-    // else changes it, so re-snapping on every row drop was just visible
-    // head-turn noise for no functional benefit.
+    bot.look(Math.PI / 2, 0, true);
   }
 
   function stopAllMovement() {
@@ -305,9 +271,9 @@ function createFarmBot() {
     console.log(`💬 [Makhecha] ${msg}`);
     if (!alive) return;
 
-    // Regrow signal from the server immediately starts the handoff.
-    if (farmingActive && !regrowing && REGROW_SIGNAL.test(msg)) {
-      console.log('🥔 Regrow signal seen in chat — triggering regrow mode.');
+    // "Regrow" typed by anyone immediately starts the handoff
+    if (farmingActive && !regrowing && /regrow/i.test(msg)) {
+      console.log('🥔 "Regrow" keyword seen in chat — triggering regrow mode.');
       triggerRegrow('chat keyword');
       return;
     }
