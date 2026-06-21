@@ -30,6 +30,14 @@ const PING_AFK_MS        = 5 * 60 * 1000;  // stand still 5 min after a ping, th
 const SHIFT_DETECT_MIN = 4;
 const SHIFT_DETECT_MAX = 256;
 
+// How long (ms) to skip re-targeting a block right after digging it, so we don't
+// resend break packets every tick while waiting for the server to confirm it's gone.
+// Self-clearing per block — no manual reset interval needed.
+const DIG_COOLDOWN_MS = 300;
+
+// Hard safety cap: never break more than this many blocks in a rolling 60s window.
+const MAX_BREAKS_PER_MINUTE = 1300;
+
 // Master switch. Set to false (e.g. by a ping) to fully stop the whole farm/regrow loop.
 // Re-running the script is what "turns it back on".
 let scriptEnabled = true;
@@ -54,19 +62,28 @@ function createFarmBot() {
   let pingPaused = false;
   let regrowing = false;
   let farmTimer = null;
+  let recentlyDug = new Set();
+  let breaksThisMinute = 0;
 
   // ── Clicking ────────────────────────────────────────────────────────────
   function onTick() {
     if (!alive || !farmingActive || pingPaused || regrowing) return;
+    if (breaksThisMinute >= MAX_BREAKS_PER_MINUTE) return;
     bot.look(-Math.PI / 2, 0, true);
 
     const pos = bot.entity.position.floored();
     for (let x = 1; x <= 5; x++) {
       const block = bot.blockAt(pos.offset(x, 1, 0));
       if (!block || block.name !== 'potatoes' || block.metadata !== 7) continue;
+      const key = `${block.position.x},${block.position.y},${block.position.z}`;
+      if (recentlyDug.has(key)) continue;
+      recentlyDug.add(key);
+      setTimeout(() => recentlyDug.delete(key), DIG_COOLDOWN_MS);
+      breaksThisMinute++;
+      bot.swingArm('right');
       bot._client.write('block_dig', { status: 0, location: block.position, face: 1 });
       bot._client.write('block_dig', { status: 2, location: block.position, face: 1 });
-      return;
+      if (breaksThisMinute >= MAX_BREAKS_PER_MINUTE) return;
     }
   }
 
@@ -133,6 +150,12 @@ function createFarmBot() {
       bot.setControlState('forward', true);
       setTimeout(() => bot.setControlState('forward', false), 100);
     }, 10000);
+
+    // Reset the block-break counter every 60s (1300/min safety cap)
+    const breakCounterInterval = setInterval(() => {
+      if (!alive || !farmingActive) { clearInterval(breakCounterInterval); return; }
+      breaksThisMinute = 0;
+    }, 60 * 1000);
 
     // Wait 3s for bot to settle after warp before starting polls
     setTimeout(() => {
