@@ -224,7 +224,9 @@ function createFarmBot() {
     bot.setControlState('right', false);
     if (dir === 'right') bot.setControlState('right', true);
     else bot.setControlState('left', true);
-    bot.look(-Math.PI / 2, 0, true); // face east (+X)
+    // No look() call here — yaw is locked once in startFarming() and nothing
+    // else changes it, so re-snapping on every row drop was just visible
+    // head-turn noise for no functional benefit.
   }
 
   function stopAllMovement() {
