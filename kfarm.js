@@ -552,4 +552,25 @@ function createRegrowBot () {
       console.log('📋 [LamaMC] End reason:', reason);
       alive = false;
       if (bot.pingShutdown) {
-        console.log('🛑 [LamaMC] Stopped after a ping — script paused. Re-ru
+        console.log('🛑 [LamaMC] Stopped after a ping — script paused. Re-run to resume.');
+        return;
+      }
+      if (bot.manualQuit) {
+        console.log('🛑 [LamaMC] Manual quit (handoff to Makhecha) — not reconnecting.');
+        return;
+      }
+      if (scriptEnabled) {
+        console.log('🔁 [LamaMC] Disconnected unexpectedly. Reconnecting in 5s...');
+        setTimeout(createRegrowBot, 5000);
+      }
+    });
+
+    bot.on('error', err => console.log('❌ [LamaMC] Error:', err.message));
+
+  } catch (err) {
+    console.log('💥 createRegrowBot crashed:', err);
+  }
+}
+
+// ── Start ─────────────────────────────────────────────────────────────────────
+createFarmBot();
