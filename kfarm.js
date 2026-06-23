@@ -49,40 +49,58 @@ console.error = (m, ...a) => {
 //  the bad packet is silently dropped.
 //
 function patchMinecraftProtocol () {
-  const candidates = [
-    'node-minecraft-protocol',
-    'minecraft-protocol',
-    // mineflayer sometimes ships its own nested copy
-    path.join(path.dirname(require.resolve('mineflayer')),
-              'node_modules', 'node-minecraft-protocol'),
-  ];
+  // Stack trace confirmed: minecraft-protocol/src/transforms/compression.js
+  // Previous patch used /lib/ — silently missed every time.
+  // Also uses zlib.unzipSync (sync throw) not async zlib.inflate,
+  // so wrapping only the callback wasn't enough — need try-catch too.
+
+  // Try every combination of package name × src|lib layout.
+  const pkgNames = ['minecraft-protocol', 'node-minecraft-protocol'];
+  const srcDirs  = ['src', 'lib'];                  // src first — that's what the trace shows
+
+  const variants = [];
+  for (const pkg of pkgNames)
+    for (const dir of srcDirs)
+      variants.push([pkg, dir]);
+
+  // Also probe mineflayer's own nested copy if it has one.
+  try {
+    const mfDir = path.dirname(require.resolve('mineflayer'));
+    for (const pkg of pkgNames)
+      for (const dir of srcDirs)
+        variants.push([path.join(mfDir, 'node_modules', pkg), dir]);
+  } catch (_) {}
 
   let decomp = false, parser = false;
 
-  for (const base of candidates) {
+  for (const [base, dir] of variants) {
     // ── 1. Decompressor ───────────────────────────────────────────────────────
+    // Handles BOTH code patterns in the wild:
+    //   • async: zlib.inflate(data, (err, r) => cb(err))   → intercepted by cb wrapper
+    //   • sync:  zlib.unzipSync(data)  → throws directly   → caught by outer try-catch
     if (!decomp) {
       try {
-        const { createDecompressor } = require(`${base}/lib/transforms/compression`);
+        const { createDecompressor } = require(`${base}/${dir}/transforms/compression`);
         const proto = Object.getPrototypeOf(createDecompressor());
         if (typeof proto._transform !== 'function') throw new Error('no _transform');
         const _orig = proto._transform;
         proto._transform = function (chunk, enc, cb) {
-          _orig.call(this, chunk, enc, (err, data) => {
-            if (err) return cb();   // drop bad compressed packet, keep stream alive
-            cb(null, data);
-          });
+          try {
+            _orig.call(this, chunk, enc, (err, data) => {
+              if (err) return cb();   // async error path  → drop packet, keep stream alive
+              cb(null, data);
+            });
+          } catch (_) { cb(); }      // sync throw (unzipSync) → drop packet, keep stream alive
         };
         decomp = true;
-        console.log(`🔧 Decompressor patched (${base})`);
-      } catch (_) { /* not found under this name */ }
+        console.log(`🔧 Decompressor patched (${base}/${dir})`);
+      } catch (_) {}
     }
 
     // ── 2. Packet deserializer ────────────────────────────────────────────────
-    // Catches "Chunk size is N but only M was read" from protodef.
     if (!parser) {
       try {
-        const mod  = require(`${base}/lib/transforms/serializer`);
+        const mod  = require(`${base}/${dir}/transforms/serializer`);
         const Ctor = mod.FullPacketParser || mod.Deserializer;
         if (!Ctor || typeof Ctor.prototype._transform !== 'function')
           throw new Error('no Ctor');
@@ -90,21 +108,21 @@ function patchMinecraftProtocol () {
         Ctor.prototype._transform = function (chunk, enc, cb) {
           try {
             _orig.call(this, chunk, enc, (err) => {
-              if (err) return cb();  // drop unreadable packet, keep stream alive
+              if (err) return cb();   // drop unreadable packet, keep stream alive
               cb();
             });
-          } catch (_) { cb(); }      // sync-throw safety net
+          } catch (_) { cb(); }
         };
         parser = true;
-        console.log(`🔧 Packet deserializer patched (${base})`);
-      } catch (_) { /* not found under this name */ }
+        console.log(`🔧 Packet deserializer patched (${base}/${dir})`);
+      } catch (_) {}
     }
 
     if (decomp && parser) break;
   }
 
   if (!decomp)
-    console.warn('⚠️  Decompressor not patched — inflate errors may cause disconnects');
+    console.warn('⚠️  Decompressor not patched — inflate/unzip errors may cause disconnects');
   if (!parser)
     console.warn('⚠️  Packet parser not patched — protodef errors may cause disconnects');
 }
