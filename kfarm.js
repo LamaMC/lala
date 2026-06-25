@@ -155,7 +155,7 @@ const REGROW_ACCOUNT = { username: 'LamaMC',   loginCommand: '/login 3195' };
 const PING_NAMES = [FARM_ACCOUNT.username, REGROW_ACCOUNT.username];
 
 const FARM_DURATION_MS   = 30 * 60 * 1000; // farm 30 min, then hand off to regrow
-const REGROW_DURATION_MS = 10 * 60 * 1000; // sit AFK 10 min, then hand back
+const REGROW_DURATION_MS = 5 * 60 * 1000; // sit AFK 5 min, then hand back
 const PING_AFK_MS        =  5 * 60 * 1000; // stand still 5 min after a ping, then hard-stop
 
 // Instant XZ shift in this range (blocks) → regrow trigger, not normal walking.
