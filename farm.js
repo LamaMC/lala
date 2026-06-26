@@ -174,8 +174,8 @@ const HOST         = 'fakepixel.me';
 const VERSION      = '1.8.9';
 const WARP_COMMAND = '/warp island';
 
-const FARM_ACCOUNT   = { username: 'Makhecha', loginCommand: '/login 3195' };
-const REGROW_ACCOUNT = { username: 'LamaMC',   loginCommand: '/login 3195' };
+const FARM_ACCOUNT   = { username: 'DrakonTide', loginCommand: '/login 3043AA' };
+const REGROW_ACCOUNT = { username: 'Areeb167',   loginCommand: '/login 13579' };
 
 // Anyone mentioning either name in chat counts as a "ping"
 const PING_NAMES = [FARM_ACCOUNT.username, REGROW_ACCOUNT.username];
@@ -197,7 +197,7 @@ const MAX_BREAKS_PER_MINUTE = 1300;
 // Master switch. Set to false (e.g. by a ping) to fully stop the whole loop.
 let scriptEnabled = true;
 
-// ── Farm bot (Makhecha) ───────────────────────────────────────────────────────
+// ── Farm bot (DrakonTide) ───────────────────────────────────────────────────────
 function createFarmBot () {
   if (!scriptEnabled) return;
   console.log(`🚀 createFarmBot() called — connecting as ${FARM_ACCOUNT.username}`);
@@ -224,11 +224,11 @@ function createFarmBot () {
     function onTick () {
       if (!alive || !farmingActive || pingPaused || regrowing) return;
       if (breaksThisMinute >= MAX_BREAKS_PER_MINUTE) return;
-      bot.look(Math.PI / 2, 0, true); // west (−X)
+      bot.look(Math.PI / 2, 0, true); // west (-X)
 
       const pos = bot.entity.position.floored();
       for (let x = 1; x <= 5; x++) {
-        const block = bot.blockAt(pos.offset(-x, 1, 0)); // scan west (−X)
+        const block = bot.blockAt(pos.offset(-x, 1, 0)); // scan west (-X)
         if (!block || block.name !== 'nether_wart' || block.metadata !== 3) continue; // ripe nether wart
         const key = `${block.position.x},${block.position.y},${block.position.z}`;
         if (recentlyDug.has(key)) continue;
@@ -265,7 +265,7 @@ function createFarmBot () {
         if (handled || !alive) return;
         handled = true;
         bot.removeListener('windowOpen', onWindow);
-        console.log('⚠️ [Makhecha] windowOpen timed out — warping directly.');
+        console.log('⚠️ [DrakonTide] windowOpen timed out — warping directly.');
         bot.chat(WARP_COMMAND);
         setTimeout(() => { if (alive) startFarming(); }, 5000);
       }, 6000);
@@ -304,7 +304,7 @@ function createFarmBot () {
       regrowing = false;
 
       bot.setQuickBarSlot(0);
-      bot.look(Math.PI / 2, 0, true); // west (−X)
+      bot.look(Math.PI / 2, 0, true); // west (-X)
       console.log('🌾 Farming started.');
 
       startClicking();
@@ -320,7 +320,7 @@ function createFarmBot () {
       const nudgeInterval = setInterval(() => {
         if (!alive || !farmingActive) { clearInterval(nudgeInterval); return; }
         if (pingPaused || regrowing) return;
-        bot.look(Math.PI / 2, 0, true); // west (−X)
+        bot.look(Math.PI / 2, 0, true); // west (-X)
         bot.setControlState('forward', true);
         setTimeout(() => bot.setControlState('forward', false), 100);
       }, 10000);
@@ -373,7 +373,7 @@ function createFarmBot () {
       bot.setControlState('right', false);
       if (dir === 'right') bot.setControlState('right', true);
       else                 bot.setControlState('left',  true);
-      bot.look(Math.PI / 2, 0, true); // west (−X)
+      bot.look(Math.PI / 2, 0, true); // west (-X)
     }
 
     function stopAllMovement () {
@@ -423,11 +423,11 @@ function createFarmBot () {
     // ── Bot lifecycle ─────────────────────────────────────────────────────────
     bot.loadPlugin(pathfinder);
 
-    bot.on('login', () => console.log('🔌 [Makhecha] Login packet sent.'));
-    bot._client.on('error', err => console.log('🔥 [Makhecha] Client error:', err.message));
+    bot.on('login', () => console.log('🔌 [DrakonTide] Login packet sent.'));
+    bot._client.on('error', err => console.log('🔥 [DrakonTide] Client error:', err.message));
 
     bot.once('spawn', () => {
-      console.log('🟢 [Makhecha] SPAWN EVENT FIRED');
+      console.log('🟢 [DrakonTide] SPAWN EVENT FIRED');
       try {
         bot._client.socket.setTimeout(24 * 60 * 60 * 1000);
         bot._client.socket.setKeepAlive(true, 10000);
@@ -444,7 +444,7 @@ function createFarmBot () {
     bot.on('message', (jsonMsg, position) => {
       if (position === 'game_info') return;
       const msg = jsonMsg.toString();
-      console.log(`💬 [Makhecha] ${msg}`);
+      console.log(`💬 [DrakonTide] ${msg}`);
       if (!alive) return;
 
       if (farmingActive && !regrowing && /regrow/i.test(msg)) {
@@ -471,7 +471,7 @@ function createFarmBot () {
     });
 
     bot.on('end', (reason) => {
-      console.log('📋 [Makhecha] End reason:', reason);
+      console.log('📋 [DrakonTide] End reason:', reason);
       alive = false;
       stopFarming();
       if (bot.pingShutdown) {
@@ -479,16 +479,16 @@ function createFarmBot () {
         return;
       }
       if (bot.manualQuit) {
-        console.log('🛑 Manual quit (regrow handoff) — not reconnecting as Makhecha.');
+        console.log('🛑 Manual quit (regrow handoff) — not reconnecting as DrakonTide.');
         return;
       }
       if (scriptEnabled) {
-        console.log('🔁 Disconnected unexpectedly. Reconnecting as Makhecha in 5s...');
+        console.log('🔁 Disconnected unexpectedly. Reconnecting as DrakonTide in 5s...');
         setTimeout(createFarmBot, 5000);
       }
     });
 
-    bot.on('error', err => console.log('❌ [Makhecha] Error:', err.message));
+    bot.on('error', err => console.log('❌ [DrakonTide] Error:', err.message));
 
     bot.quitBot = function () {
       bot.manualQuit = true;
@@ -503,7 +503,7 @@ function createFarmBot () {
   }
 }
 
-// ── Regrow bot (LamaMC) ───────────────────────────────────────────────────────
+// ── Regrow bot (Areeb167) ───────────────────────────────────────────────────────
 function createRegrowBot () {
   if (!scriptEnabled) return;
   console.log(`🚀 createRegrowBot() called — connecting as ${REGROW_ACCOUNT.username}`);
@@ -531,7 +531,7 @@ function createRegrowBot () {
         if (handled || !alive) return;
         handled = true;
         bot.removeListener('windowOpen', onWindow);
-        console.log('⚠️ [LamaMC] windowOpen timed out — warping directly.');
+        console.log('⚠️ [Areeb167] windowOpen timed out — warping directly.');
         bot.chat(WARP_COMMAND);
         setTimeout(() => { if (alive) enterAfkPool(); }, 5000);
       }, 6000);
@@ -547,9 +547,9 @@ function createRegrowBot () {
         if (slot && slot.name !== 'air') {
           try {
             await bot.clickWindow(20, 0, 1);
-            console.log('🎯 [LamaMC] Clicked teleport item.');
+            console.log('🎯 [Areeb167] Clicked teleport item.');
           } catch (err) {
-            console.log('❌ [LamaMC] GUI click error:', err.message);
+            console.log('❌ [Areeb167] GUI click error:', err.message);
           }
         }
         if (!alive) return;
@@ -565,10 +565,10 @@ function createRegrowBot () {
 
     // ── AFK pool ──────────────────────────────────────────────────────────────
     function enterAfkPool () {
-      console.log(`⏳ [LamaMC] AFK for ${REGROW_DURATION_MS / 1000}s while nether wart regrows...`);
+      console.log(`⏳ [Areeb167] AFK for ${REGROW_DURATION_MS / 1000}s while nether wart regrows...`);
       regrowTimer = setTimeout(() => {
         if (!alive) return;
-        console.log(`✅ [LamaMC] Regrow wait done — handing back to ${FARM_ACCOUNT.username}.`);
+        console.log(`✅ [Areeb167] Regrow wait done — handing back to ${FARM_ACCOUNT.username}.`);
         alive          = false;
         bot.manualQuit = true;
         bot.quit();
@@ -580,11 +580,11 @@ function createRegrowBot () {
     function handlePing () {
       if (pingPaused || !alive) return;
       pingPaused = true;
-      console.log('🔔 [LamaMC] Ping detected — going fully AFK for 5 min, then disconnecting.');
+      console.log('🔔 [Areeb167] Ping detected — going fully AFK for 5 min, then disconnecting.');
       if (regrowTimer) clearTimeout(regrowTimer);
       setTimeout(() => {
         if (!alive) return;
-        console.log('🛑 [LamaMC] 5 min AFK done — disconnecting. Re-run the script to resume.');
+        console.log('🛑 [Areeb167] 5 min AFK done — disconnecting. Re-run the script to resume.');
         scriptEnabled    = false;
         bot.pingShutdown = true;
         alive            = false;
@@ -595,16 +595,16 @@ function createRegrowBot () {
     // ── Bot lifecycle ─────────────────────────────────────────────────────────
     bot.loadPlugin(pathfinder);
 
-    bot.on('login', () => console.log('🔌 [LamaMC] Login packet sent.'));
-    bot._client.on('error', err => console.log('🔥 [LamaMC] Client error:', err.message));
+    bot.on('login', () => console.log('🔌 [Areeb167] Login packet sent.'));
+    bot._client.on('error', err => console.log('🔥 [Areeb167] Client error:', err.message));
 
     bot.once('spawn', () => {
-      console.log('🟢 [LamaMC] SPAWN EVENT FIRED');
+      console.log('🟢 [Areeb167] SPAWN EVENT FIRED');
       try {
         bot._client.socket.setTimeout(24 * 60 * 60 * 1000);
         bot._client.socket.setKeepAlive(true, 10000);
-      } catch (e) { console.log('⚠️ [LamaMC] socket setup failed:', e.message); }
-      console.log('✅ [LamaMC] Spawned');
+      } catch (e) { console.log('⚠️ [Areeb167] socket setup failed:', e.message); }
+      console.log('✅ [Areeb167] Spawned');
       bot.manualQuit = false;
       setTimeout(() => {
         if (!alive) return;
@@ -616,7 +616,7 @@ function createRegrowBot () {
     bot.on('message', (jsonMsg, position) => {
       if (position === 'game_info') return;
       const msg = jsonMsg.toString();
-      console.log(`💬 [LamaMC] ${msg}`);
+      console.log(`💬 [Areeb167] ${msg}`);
       if (!alive || pingPaused) return;
       const isPinged = PING_NAMES.some(n => msg.toLowerCase().includes(n.toLowerCase()));
       if (isPinged) handlePing();
@@ -624,7 +624,7 @@ function createRegrowBot () {
 
     bot.on('death', () => {
       if (!alive) return;
-      console.log('☠️ [LamaMC] Died. Restarting...');
+      console.log('☠️ [Areeb167] Died. Restarting...');
       if (regrowTimer) clearTimeout(regrowTimer);
       setTimeout(() => {
         if (!alive) return;
@@ -634,24 +634,24 @@ function createRegrowBot () {
     });
 
     bot.on('end', (reason) => {
-      console.log('📋 [LamaMC] End reason:', reason);
+      console.log('📋 [Areeb167] End reason:', reason);
       alive = false;
       if (regrowTimer) clearTimeout(regrowTimer);
       if (bot.pingShutdown) {
-        console.log('🛑 [LamaMC] Stopped after a ping — script paused. Re-run to resume.');
+        console.log('🛑 [Areeb167] Stopped after a ping — script paused. Re-run to resume.');
         return;
       }
       if (bot.manualQuit) {
-        console.log('🛑 [LamaMC] Manual quit (handoff) — not reconnecting as LamaMC.');
+        console.log('🛑 [Areeb167] Manual quit (handoff) — not reconnecting as Areeb167.');
         return;
       }
       if (scriptEnabled) {
-        console.log('🔁 [LamaMC] Disconnected unexpectedly. Reconnecting as LamaMC in 5s...');
+        console.log('🔁 [Areeb167] Disconnected unexpectedly. Reconnecting as Areeb167 in 5s...');
         setTimeout(createRegrowBot, 5000);
       }
     });
 
-    bot.on('error', err => console.log('❌ [LamaMC] Error:', err.message));
+    bot.on('error', err => console.log('❌ [Areeb167] Error:', err.message));
 
   } catch (err) {
     console.log('💥 createRegrowBot crashed:', err);
