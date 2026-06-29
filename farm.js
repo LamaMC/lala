@@ -25,14 +25,15 @@ console.error = (m, ...a) => {
   const msg = (m instanceof Error) ? (m.message ?? '')
             : (typeof m === 'string') ? m
             : String(m ?? '');
-  if (msg.includes('partial packet')         ||
-      msg.includes('problem inflating')      ||
-      msg.includes('incorrect header check') ||
-      msg.includes('Z_DATA_ERROR')           ||
-      msg.includes('Chunk size is')          ||
-      msg.includes('uncompressed length')    ||
-      msg.includes('Missing characters')     || // ← FIX 1: PartialReadError
-      msg.includes('PartialReadError')) return;
+  if (msg.includes('partial packet')              ||
+      msg.includes('problem inflating')           ||
+      msg.includes('incorrect header check')      ||
+      msg.includes('Z_DATA_ERROR')                ||
+      msg.includes('Chunk size is')               ||
+      msg.includes('uncompressed length')         ||
+      msg.includes('Missing characters')          ||
+      msg.includes('PartialReadError')            ||
+      msg.includes('"offset" is out of range')) return; // ← bad varint in Splitter
   _error(m, ...a);
 };
 
@@ -68,7 +69,7 @@ function patchMinecraftProtocol () {
         variants.push([path.join(mfDir, 'node_modules', pkg), dir]);
   } catch (_) {}
 
-  let decomp = false, parser = false;
+  let decomp = false, parser = false, framer = false;
 
   for (const [base, dir] of variants) {
     // ── 1. Decompressor prototype patch ──────────────────────────────────────
@@ -112,7 +113,33 @@ function patchMinecraftProtocol () {
       } catch (_) {}
     }
 
-    if (decomp && parser) break;
+    // ── 3. Packet framer (Splitter) prototype patch ───────────────────────────
+    // Handles bad varint offsets (ERR_OUT_OF_RANGE) from corrupt server packets.
+    // The Splitter reads packet length as a varint; a mangled buffer causes
+    // readUInt8 to throw synchronously with an out-of-range offset, killing
+    // the connection. We catch it here and drop the bad packet instead.
+    if (!framer) {
+      try {
+        const { Splitter } = require(`${base}/${dir}/transforms/framing`);
+        if (!Splitter || typeof Splitter.prototype._transform !== 'function')
+          throw new Error('no Splitter');
+        const _orig = Splitter.prototype._transform;
+        Splitter.prototype._transform = function (chunk, enc, cb) {
+          try {
+            _orig.call(this, chunk, enc, cb);
+          } catch (err) {
+            if (err?.code === 'ERR_OUT_OF_RANGE' || err?.message?.includes('out of range')) {
+              return cb(); // drop corrupt frame, keep stream alive
+            }
+            cb(err); // real errors still propagate
+          }
+        };
+        framer = true;
+        console.log(`🔧 Splitter prototype patched (${base}/${dir})`);
+      } catch (_) {}
+    }
+
+    if (decomp && parser && framer) break;
   }
 
   // ── 3. FIX 3: Patch protodef.parsePacketBuffer directly ──────────────────
@@ -133,6 +160,8 @@ function patchMinecraftProtocol () {
     console.warn('⚠️  Decompressor not patched — inflate/unzip errors may cause disconnects');
   if (!parser)
     console.warn('⚠️  Packet parser not patched — protodef errors may cause disconnects');
+  if (!framer)
+    console.warn('⚠️  Splitter not patched — bad varint offsets may cause disconnects');
 }
 
 patchMinecraftProtocol();
@@ -143,11 +172,13 @@ process.on('uncaughtException', err => {
   const stack = err?.stack   ?? '';
 
   // Compression / framing noise from the server
-  if (m.includes('incorrect header check') ||
-      m.includes('partial packet')          ||
-      m.includes('Chunk size is')           ||
-      m.includes('Z_DATA_ERROR')            ||
-      m.includes('Missing characters')      || // ← FIX 2: PartialReadError
+  if (m.includes('incorrect header check')        ||
+      m.includes('partial packet')                ||
+      m.includes('Chunk size is')                 ||
+      m.includes('Z_DATA_ERROR')                  ||
+      m.includes('Missing characters')            ||
+      m.includes('"offset" is out of range')      || // ← bad varint in Splitter
+      (err?.code === 'ERR_OUT_OF_RANGE' && m.includes('offset')) ||
       err?.name === 'PartialReadError') return;
 
   // Block-palette assertion (harmless for farming)
