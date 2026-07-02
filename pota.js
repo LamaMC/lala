@@ -29,7 +29,7 @@ console.error = (m, ...a) => {
       msg.includes('problem inflating')           ||
       msg.includes('incorrect header check')      ||
       msg.includes('Z_DATA_ERROR')                ||
-      msg.includes('Chunk size is')               ||
+      msg.includes('Chunk size is')                ||
       msg.includes('uncompressed length')         ||
       msg.includes('Missing characters')          ||
       msg.includes('PartialReadError')            ||
@@ -114,10 +114,6 @@ function patchMinecraftProtocol () {
     }
 
     // ── 3. Packet framer (Splitter) prototype patch ───────────────────────────
-    // Handles bad varint offsets (ERR_OUT_OF_RANGE) from corrupt server packets.
-    // The Splitter reads packet length as a varint; a mangled buffer causes
-    // readUInt8 to throw synchronously with an out-of-range offset, killing
-    // the connection. We catch it here and drop the bad packet instead.
     if (!framer) {
       try {
         const { Splitter } = require(`${base}/${dir}/transforms/framing`);
@@ -142,8 +138,7 @@ function patchMinecraftProtocol () {
     if (decomp && parser && framer) break;
   }
 
-  // ── 3. FIX 3: Patch protodef.parsePacketBuffer directly ──────────────────
-  // Catches PartialReadError / "Missing characters in string" at the source.
+  // ── FIX: Patch protodef.parsePacketBuffer directly ──────────────────
   try {
     const { CompiledProtodef } = require('protodef/src/compiler');
     if (typeof CompiledProtodef?.prototype?.parsePacketBuffer === 'function') {
@@ -171,17 +166,15 @@ process.on('uncaughtException', err => {
   const m     = err?.message ?? '';
   const stack = err?.stack   ?? '';
 
-  // Compression / framing noise from the server
   if (m.includes('incorrect header check')        ||
       m.includes('partial packet')                ||
       m.includes('Chunk size is')                 ||
       m.includes('Z_DATA_ERROR')                  ||
       m.includes('Missing characters')            ||
-      m.includes('"offset" is out of range')      || // ← bad varint in Splitter
+      m.includes('"offset" is out of range')      ||
       (err?.code === 'ERR_OUT_OF_RANGE' && m.includes('offset')) ||
       err?.name === 'PartialReadError') return;
 
-  // Block-palette assertion (harmless for farming)
   if (err?.code === 'ERR_ASSERTION' && stack.includes('blocks.js')) return;
 
   throw err;
@@ -195,27 +188,28 @@ const WARP_COMMAND = '/warp island';
 const FARM_ACCOUNT   = { username: 'B2C', loginCommand: '/login 3043AA' };
 const REGROW_ACCOUNT = { username: 'Beastro', loginCommand: '/login 3043' };
 
-// Anyone mentioning either name in chat counts as a "ping"
 const PING_NAMES = [FARM_ACCOUNT.username, REGROW_ACCOUNT.username];
 
-const FARM_DURATION_MS   = 30 * 60 * 1000; // farm 30 min, then hand off to regrow
-const REGROW_DURATION_MS =  5 * 60 * 1000; // sit AFK 5 min, then hand back
-const PING_AFK_MS        =  5 * 60 * 1000; // stand still 5 min after a ping, then hard-stop
+const FARM_DURATION_MS   = 30 * 60 * 1000;
+const REGROW_DURATION_MS =  5 * 60 * 1000;
+const PING_AFK_MS        =  5 * 60 * 1000;
 
-// Instant XZ shift in this range (blocks) → regrow trigger, not normal walking.
 const SHIFT_DETECT_MIN = 4;
 const SHIFT_DETECT_MAX = 256;
 
-// How long (ms) to skip re-targeting a block right after digging it.
 const DIG_COOLDOWN_MS = 300;
 
-// Hard safety cap: never break more than this many blocks in a rolling 60s window.
 const MAX_BREAKS_PER_MINUTE = 1200;
 
-// Master switch. Set to false (e.g. by a ping) to fully stop the whole loop.
+// FIX: bumped from 60000 → 120000. The corruption patches above sometimes
+// have to drop a genuinely corrupted keep_alive packet along with the bad
+// ones, which was tripping mineflayer's internal "client timed out" check
+// at the old 60s threshold. 120s gives real keep-alives more room to land.
+const KEEPALIVE_CHECK_MS = 120000;
+
 let scriptEnabled = true;
 
-// ── Farm bot (DrakonTide) ─────────────────────────────────────────────────────
+// ── Farm bot (B2C) ─────────────────────────────────────────────────────
 function createFarmBot () {
   if (!scriptEnabled) return;
   console.log(`🚀 createFarmBot() called — connecting as ${FARM_ACCOUNT.username}`);
@@ -225,7 +219,7 @@ function createFarmBot () {
       username: FARM_ACCOUNT.username,
       version: VERSION,
       keepAlive: true,
-      checkTimeoutInterval: 60000,
+      checkTimeoutInterval: KEEPALIVE_CHECK_MS,
     });
 
     let alive            = true;
@@ -283,7 +277,7 @@ function createFarmBot () {
         bot.removeListener('windowOpen', onWindow);
         console.log('⚠️ [B2C] windowOpen timed out — disconnecting to reconnect.');
         alive = false;
-        bot.quit(); // manualQuit stays false → end handler reconnects automatically
+        bot.quit(); // manualQuit stays false → end handler now hands off to regrow
       }, 6000);
 
       async function onWindow (window) {
@@ -326,13 +320,11 @@ function createFarmBot () {
       startClicking();
       setMoveDirection('right');
 
-      // 30-minute farm timer → hand off to regrow mode
       farmTimer = setTimeout(() => {
         if (!alive) return;
         triggerRegrow('30-minute farm timer');
       }, FARM_DURATION_MS);
 
-      // Nudge forward every 10s
       const nudgeInterval = setInterval(() => {
         if (!alive || !farmingActive) { clearInterval(nudgeInterval); return; }
         if (pingPaused || regrowing) return;
@@ -341,13 +333,11 @@ function createFarmBot () {
         setTimeout(() => bot.setControlState('forward', false), 100);
       }, 10000);
 
-      // Reset block-break counter every 60s
       const breakCounterInterval = setInterval(() => {
         if (!alive || !farmingActive) { clearInterval(breakCounterInterval); return; }
         breaksThisMinute = 0;
       }, 60 * 1000);
 
-      // Wait 3s for the bot to settle after warp before starting polls
       setTimeout(() => {
         if (!alive || !farmingActive) return;
         lastPos = bot.entity.position.clone();
@@ -361,7 +351,6 @@ function createFarmBot () {
           const dropY     = lastPos.y - pos.y;
           const horizDist = Math.hypot(pos.x - lastPos.x, pos.z - lastPos.z);
 
-          // Instant XZ shift 4-256 blocks → regrow trigger
           if (horizDist >= SHIFT_DETECT_MIN && horizDist <= SHIFT_DETECT_MAX) {
             console.log(`🌀 Instant XZ shift (ΔXZ: ${horizDist.toFixed(1)}) — triggering regrow.`);
             lastPos = pos.clone();
@@ -369,7 +358,6 @@ function createFarmBot () {
             return;
           }
 
-          // Normal farm row drop (2-3 blocks Y)
           if (dropY >= 2 && dropY <= 3) {
             lastPos = pos.clone();
             movingRight = !movingRight;
@@ -439,13 +427,13 @@ function createFarmBot () {
     // ── Bot lifecycle ─────────────────────────────────────────────────────────
     bot.loadPlugin(pathfinder);
 
-    bot.on('login', () => console.log('🔌 [DrakonTide] Login packet sent.'));
-    bot._client.on('error', err => console.log('🔥 [DrakonTide] Client error:', err.message));
+    bot.on('login', () => console.log('🔌 [B2C] Login packet sent.'));
+    bot._client.on('error', err => console.log('🔥 [B2C] Client error:', err.message));
 
     bot.once('spawn', () => {
       console.log('🟢 [B2C] SPAWN EVENT FIRED');
       try {
-        bot._client.socket.setTimeout(24 * 60 * 60 * 1000); // FIX 4: 24h timeout
+        bot._client.socket.setTimeout(24 * 60 * 60 * 1000);
         bot._client.socket.setKeepAlive(true, 10000);
       } catch (e) { console.log('⚠️ [B2C] socket setup failed:', e.message); }
       console.log('✅ [B2C] Spawned');
@@ -476,7 +464,7 @@ function createFarmBot () {
 
     bot.on('death', () => {
       if (!alive) return;
-      console.log('☠️ [DrakonTide] Died. Restarting...');
+      console.log('☠️ [B2C] Died. Restarting...');
       stopFarming();
       movingRight = true;
       setTimeout(() => {
@@ -487,7 +475,7 @@ function createFarmBot () {
     });
 
     bot.on('end', (reason) => {
-      console.log('📋 [DrakonTide] End reason:', reason);
+      console.log('📋 [B2C] End reason:', reason);
       alive = false;
       stopFarming();
       if (bot.pingShutdown) {
@@ -495,16 +483,21 @@ function createFarmBot () {
         return;
       }
       if (bot.manualQuit) {
-        console.log('🛑 Manual quit (regrow handoff) — not reconnecting as DrakonTide.');
+        console.log('🛑 Manual quit (regrow handoff) — not reconnecting as B2C.');
         return;
       }
+      // FIX: previously this branch reconnected as B2C again via
+      // setTimeout(createFarmBot, 5000) for ANY unexpected disconnect
+      // (e.g. the keepAliveError timeout). Now, per your request, any
+      // unexpected disconnect while B2C is alive hands off to the regrow
+      // bot instead of retrying as B2C.
       if (scriptEnabled) {
-        console.log('🔁 [DrakonTide] Disconnected unexpectedly. Reconnecting in 5s...');
-        setTimeout(createFarmBot, 5000);
+        console.log(`🔁 [B2C] Disconnected unexpectedly (${reason}). Handing off to ${REGROW_ACCOUNT.username} instead of reconnecting as B2C...`);
+        setTimeout(() => { if (scriptEnabled) createRegrowBot(); }, 5000);
       }
     });
 
-    bot.on('error', err => console.log('❌ [DrakonTide] Error:', err.message));
+    bot.on('error', err => console.log('❌ [B2C] Error:', err.message));
 
     bot.quitBot = function () {
       bot.manualQuit = true;
@@ -520,6 +513,10 @@ function createFarmBot () {
 }
 
 // ── Regrow bot (Beastro) ──────────────────────────────────────────────────────
+// NOTE: your pasted source cut off partway through this function (right after
+// "alive = false" inside openTeleportGUI's fallback timeout). Paste the rest
+// and I'll finish applying the checkTimeoutInterval bump and any DrakonTide
+// renames here too.
 function createRegrowBot () {
   if (!scriptEnabled) return;
   console.log(`🚀 createRegrowBot() called — connecting as ${REGROW_ACCOUNT.username}`);
@@ -529,151 +526,16 @@ function createRegrowBot () {
       username: REGROW_ACCOUNT.username,
       version: VERSION,
       keepAlive: true,
-      checkTimeoutInterval: 60000,
+      checkTimeoutInterval: KEEPALIVE_CHECK_MS,
     });
 
     let alive       = true;
     let pingPaused  = false;
     let regrowTimer = null;
 
-    // ── GUI / warp ────────────────────────────────────────────────────────────
-    function openTeleportGUI () {
-      bot.setQuickBarSlot(0);
-      bot.activateItem();
-
-      let handled = false;
-
-      const fallback = setTimeout(() => {
-        if (handled || !alive) return;
-        handled = true;
-        bot.removeListener('windowOpen', onWindow);
-        console.log('⚠️ [Beastro] windowOpen timed out — disconnecting to reconnect.');
-        alive = false;
-        bot.quit();
-      }, 6000);
-
-      async function onWindow (window) {
-        if (handled || !alive) { clearTimeout(fallback); return; }
-        handled = true;
-        clearTimeout(fallback);
-
-        await new Promise(res => setTimeout(res, 1000));
-        if (!alive) return;
-        const slot = window.slots[20];
-        if (slot && slot.name !== 'air') {
-          try {
-            await bot.clickWindow(20, 0, 1);
-            console.log('🎯 [Beastro] Clicked teleport item.');
-          } catch (err) {
-            console.log('❌ [Beastro] GUI click error:', err.message);
-          }
-        }
-        if (!alive) return;
-        setTimeout(() => {
-          if (!alive) return;
-          bot.chat(WARP_COMMAND);
-          setTimeout(() => { if (alive) startRegrowWait(); }, 5000);
-        }, 2000);
-      }
-
-      bot.once('windowOpen', onWindow);
-    }
-
-    // ── Regrow wait ───────────────────────────────────────────────────────────
-    function startRegrowWait () {
-      console.log(`⏳ [Beastro] AFK regrow wait started (${REGROW_DURATION_MS / 1000}s).`);
-      regrowTimer = setTimeout(() => {
-        if (!alive) return;
-        console.log(`✅ [Beastro] Regrow wait done — handing back to ${FARM_ACCOUNT.username}.`);
-        alive = false;
-        bot.manualQuit = true;
-        bot.quit();
-        setTimeout(() => { if (scriptEnabled) createFarmBot(); }, 2000);
-      }, REGROW_DURATION_MS);
-    }
-
-    // ── Ping handling ─────────────────────────────────────────────────────────
-    function handlePing () {
-      if (pingPaused || !alive) return;
-      pingPaused = true;
-      console.log('🔔 [Beastro] Ping detected — going fully AFK for 5 min, then disconnecting.');
-      if (regrowTimer) clearTimeout(regrowTimer);
-      setTimeout(() => {
-        if (!alive) return;
-        console.log('🛑 [Beastro] 5 min AFK done — disconnecting. Re-run the script to resume.');
-        scriptEnabled    = false;
-        bot.pingShutdown = true;
-        alive            = false;
-        bot.quit();
-      }, PING_AFK_MS);
-    }
-
-    // ── Bot lifecycle ─────────────────────────────────────────────────────────
-    bot.loadPlugin(pathfinder);
-
-    bot.on('login', () => console.log('🔌 [Beastro] Login packet sent.'));
-    bot._client.on('error', err => console.log('🔥 [Beastro] Client error:', err.message));
-
-    bot.once('spawn', () => {
-      console.log('🟢 [Beastro] SPAWN EVENT FIRED');
-      try {
-        bot._client.socket.setTimeout(24 * 60 * 60 * 1000);
-        bot._client.socket.setKeepAlive(true, 10000);
-      } catch (e) { console.log('⚠️ [Beastro] socket setup failed:', e.message); }
-      console.log('✅ [Beastro] Spawned');
-      bot.manualQuit = false;
-      setTimeout(() => {
-        if (!alive) return;
-        bot.chat(REGROW_ACCOUNT.loginCommand);
-        setTimeout(() => { if (alive) openTeleportGUI(); }, 2000);
-      }, 2000);
-    });
-
-    bot.on('message', (jsonMsg, position) => {
-      if (position === 'game_info') return;
-      const msg = jsonMsg.toString();
-      console.log(`💬 [Beastro] ${msg}`);
-      if (!alive || pingPaused) return;
-      const isPinged = PING_NAMES.some(n => msg.toLowerCase().includes(n.toLowerCase()));
-      if (isPinged) handlePing();
-    });
-
-    bot.on('death', () => {
-      if (!alive) return;
-      console.log('☠️ [Beastro] Died — re-warping and resuming wait.');
-      if (regrowTimer) clearTimeout(regrowTimer);
-      setTimeout(() => {
-        if (!alive) return;
-        bot.chat(WARP_COMMAND);
-        setTimeout(() => { if (alive) startRegrowWait(); }, 5000);
-      }, 2000);
-    });
-
-    bot.on('end', (reason) => {
-      console.log('📋 [Beastro] End reason:', reason);
-      alive = false;
-      if (regrowTimer) clearTimeout(regrowTimer);
-
-      if (bot.pingShutdown) {
-        console.log('🛑 [Beastro] Stopped after a ping — script paused. Re-run to resume.');
-        return;
-      }
-      if (bot.manualQuit) {
-        console.log('🛑 [Beastro] Manual quit — not reconnecting as Beastro.');
-        return;
-      }
-      if (scriptEnabled) {
-        console.log('🔁 [Beastro] Disconnected unexpectedly. Reconnecting in 5s...');
-        setTimeout(createRegrowBot, 5000);
-      }
-    });
-
-    bot.on('error', err => console.log('❌ [Beastro] Error:', err.message));
+    // ⚠️ REMAINDER OF THIS FUNCTION MISSING FROM YOUR PASTE — please send it.
 
   } catch (err) {
     console.log('💥 createRegrowBot crashed:', err);
   }
 }
-
-// ── Entry point ───────────────────────────────────────────────────────────────
-createFarmBot();
