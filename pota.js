@@ -210,7 +210,7 @@ const SHIFT_DETECT_MAX = 256;
 const DIG_COOLDOWN_MS = 300;
 
 // Hard safety cap: never break more than this many blocks in a rolling 60s window.
-const MAX_BREAKS_PER_MINUTE = 1300;
+const MAX_BREAKS_PER_MINUTE = 1200;
 
 // Master switch. Set to false (e.g. by a ping) to fully stop the whole loop.
 let scriptEnabled = true;
@@ -245,9 +245,9 @@ function createFarmBot () {
       bot.look(Math.PI / 2, 0, true); // west (-X)
 
       const pos = bot.entity.position.floored();
-      for (let x = 1; x <= 4; x++) {
-        const block = bot.blockAt(pos.offset(-x, 2, 0));
-        if (!block || block.name !== 'red_mushroom') continue;
+      for (let x = 1; x <= 5; x++) {
+        const block = bot.blockAt(pos.offset(-x, 1, 0));
+        if (!block || block.name !== 'potatoes' || block.metadata !== 7) continue;
         const key = `${block.position.x},${block.position.y},${block.position.z}`;
         if (recentlyDug.has(key)) continue;
         recentlyDug.add(key);
