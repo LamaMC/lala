@@ -520,6 +520,7 @@ function createRegrowBot () {
     let pingPaused  = false;
     let regrowTimer = null;
 
+    // ── GUI / warp ────────────────────────────────────────────────────────────
     function openTeleportGUI () {
       bot.setQuickBarSlot(0);
       bot.activateItem();
@@ -563,25 +564,20 @@ function createRegrowBot () {
       bot.once('windowOpen', onWindow);
     }
 
-    // keepAlive:true already answers the server's keep-alive pings at the protocol
-    // level — nothing extra needed here.
+    // ── AFK regrow wait ───────────────────────────────────────────────────────
     function enterAfkPool () {
-      console.log('💤 [LamaMC] In AFK pool — idling, keep-alive only.');
+      console.log(`⏳ [LamaMC] AFK regrow wait started (${REGROW_DURATION_MS / 1000}s).`);
       regrowTimer = setTimeout(() => {
         if (!alive) return;
-        endRegrow('10-minute regrow timer elapsed');
+        console.log(`✅ [LamaMC] Regrow wait done — handing back to ${FARM_ACCOUNT.username}.`);
+        alive = false;
+        bot.manualQuit = true;
+        bot.quit();
+        setTimeout(() => { if (scriptEnabled) createFarmBot(); }, 2000);
       }, REGROW_DURATION_MS);
     }
 
-    function endRegrow (reason) {
-      console.log(`🌾 Regrow done (${reason}). Handing back to ${FARM_ACCOUNT.username}...`);
-      if (regrowTimer) clearTimeout(regrowTimer);
-      alive         = false;
-      bot.manualQuit = true;
-      bot.quit();
-      setTimeout(() => { if (scriptEnabled) createFarmBot(); }, 2000);
-    }
-
+    // ── Ping handling ─────────────────────────────────────────────────────────
     function handlePing () {
       if (pingPaused || !alive) return;
       pingPaused = true;
@@ -589,13 +585,16 @@ function createRegrowBot () {
       if (regrowTimer) clearTimeout(regrowTimer);
       setTimeout(() => {
         if (!alive) return;
-        console.log('🛑 5 min AFK done — disconnecting. Re-run to resume.');
+        console.log('🛑 [LamaMC] 5 min AFK done — disconnecting. Re-run the script to resume.');
         scriptEnabled    = false;
         bot.pingShutdown = true;
         alive            = false;
         bot.quit();
       }, PING_AFK_MS);
     }
+
+    // ── Bot lifecycle ─────────────────────────────────────────────────────────
+    bot.loadPlugin(pathfinder);
 
     bot.on('login', () => console.log('🔌 [LamaMC] Login packet sent.'));
     bot._client.on('error', err => console.log('🔥 [LamaMC] Client error:', err.message));
@@ -626,18 +625,26 @@ function createRegrowBot () {
 
     bot.on('death', () => {
       if (!alive) return;
-      console.log('☠️ [LamaMC] Died while in the regrow/AFK pool.');
+      console.log('☠️ [LamaMC] Died — re-warping and resuming wait.');
+      if (regrowTimer) clearTimeout(regrowTimer);
+      setTimeout(() => {
+        if (!alive) return;
+        bot.chat(WARP_COMMAND);
+        setTimeout(() => { if (alive) enterAfkPool(); }, 5000);
+      }, 2000);
     });
 
     bot.on('end', (reason) => {
       console.log('📋 [LamaMC] End reason:', reason);
       alive = false;
+      if (regrowTimer) clearTimeout(regrowTimer);
+
       if (bot.pingShutdown) {
         console.log('🛑 [LamaMC] Stopped after a ping — script paused. Re-run to resume.');
         return;
       }
       if (bot.manualQuit) {
-        console.log('🛑 [LamaMC] Manual quit (handoff to Makhecha) — not reconnecting.');
+        console.log('🛑 [LamaMC] Manual quit — not reconnecting as LamaMC.');
         return;
       }
       if (scriptEnabled) {
@@ -653,5 +660,5 @@ function createRegrowBot () {
   }
 }
 
-// ── Start ─────────────────────────────────────────────────────────────────────
+// ── Entry point ───────────────────────────────────────────────────────────────
 createFarmBot();
