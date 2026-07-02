@@ -246,8 +246,8 @@ function createFarmBot () {
 
       const pos = bot.entity.position.floored();
       for (let x = 1; x <= 5; x++) {
-        const block = bot.blockAt(pos.offset(-x, 2, 0));
-        if (!block || block.name !== 'red_mushroom') continue;
+        const block = bot.blockAt(pos.offset(-x, 1, 0));
+        if (!block || block.name !== 'potatoes' || block.metadata !== 7) continue;
         const key = `${block.position.x},${block.position.y},${block.position.z}`;
         if (recentlyDug.has(key)) continue;
         recentlyDug.add(key);
@@ -443,12 +443,12 @@ function createFarmBot () {
     bot._client.on('error', err => console.log('🔥 [DrakonTide] Client error:', err.message));
 
     bot.once('spawn', () => {
-      console.log('🟢 [DrakonTide] SPAWN EVENT FIRED');
+      console.log('🟢 [B2C] SPAWN EVENT FIRED');
       try {
         bot._client.socket.setTimeout(24 * 60 * 60 * 1000); // FIX 4: 24h timeout
         bot._client.socket.setKeepAlive(true, 10000);
-      } catch (e) { console.log('⚠️ [DrakonTide] socket setup failed:', e.message); }
-      console.log('✅ [DrakonTide] Spawned');
+      } catch (e) { console.log('⚠️ [B2C] socket setup failed:', e.message); }
+      console.log('✅ [B2C] Spawned');
       bot.manualQuit = false;
       setTimeout(() => {
         if (!alive) return;
@@ -460,7 +460,7 @@ function createFarmBot () {
     bot.on('message', (jsonMsg, position) => {
       if (position === 'game_info') return;
       const msg = jsonMsg.toString();
-      console.log(`💬 [DrakonTide] ${msg}`);
+      console.log(`💬 [B2C] ${msg}`);
       if (!alive) return;
 
       if (farmingActive && !regrowing && /regrow/i.test(msg)) {
