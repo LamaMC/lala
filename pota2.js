@@ -192,8 +192,8 @@ const HOST         = 'fakepixel.me';
 const VERSION      = '1.8.9';
 const WARP_COMMAND = '/warp island';
 
-const FARM_ACCOUNT   = { username: 'B2C', loginCommand: '/login 3043AA' };
-const REGROW_ACCOUNT = { username: 'Beastro', loginCommand: '/login 3043' };
+const FARM_ACCOUNT   = { username: 'DrakonTide', loginCommand: '/login 3043AA' };
+const REGROW_ACCOUNT = { username: 'Areeb167', loginCommand: '/login 13579' };
 
 // Anyone mentioning either name in chat counts as a "ping"
 const PING_NAMES = [FARM_ACCOUNT.username, REGROW_ACCOUNT.username];
