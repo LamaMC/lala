@@ -215,7 +215,7 @@ const MAX_BREAKS_PER_MINUTE = 1200;
 // Master switch. Set to false (e.g. by a ping) to fully stop the whole loop.
 let scriptEnabled = true;
 
-// ── Farm bot (DrakonTide) ─────────────────────────────────────────────────────
+// ── Farm bot (B2C) ─────────────────────────────────────────────────────
 function createFarmBot () {
   if (!scriptEnabled) return;
   console.log(`🚀 createFarmBot() called — connecting as ${FARM_ACCOUNT.username}`);
@@ -281,7 +281,7 @@ function createFarmBot () {
         if (handled || !alive) return;
         handled = true;
         bot.removeListener('windowOpen', onWindow);
-        console.log('⚠️ [DrakonTide] windowOpen timed out — disconnecting to reconnect.');
+        console.log('⚠️ [B2C] windowOpen timed out — disconnecting to reconnect.');
         alive = false;
         bot.quit(); // manualQuit stays false → end handler reconnects automatically
       }, 6000);
@@ -297,9 +297,9 @@ function createFarmBot () {
         if (slot && slot.name !== 'air') {
           try {
             await bot.clickWindow(20, 0, 1);
-            console.log('🎯 [DrakonTide] Clicked teleport item.');
+            console.log('🎯 [B2C] Clicked teleport item.');
           } catch (err) {
-            console.log('❌ [DrakonTide] GUI click error:', err.message);
+            console.log('❌ [B2C] GUI click error:', err.message);
           }
         }
         if (!alive) return;
@@ -439,16 +439,16 @@ function createFarmBot () {
     // ── Bot lifecycle ─────────────────────────────────────────────────────────
     bot.loadPlugin(pathfinder);
 
-    bot.on('login', () => console.log('🔌 [DrakonTide] Login packet sent.'));
-    bot._client.on('error', err => console.log('🔥 [DrakonTide] Client error:', err.message));
+    bot.on('login', () => console.log('🔌 [B2C] Login packet sent.'));
+    bot._client.on('error', err => console.log('🔥 [B2C] Client error:', err.message));
 
     bot.once('spawn', () => {
-      console.log('🟢 [DrakonTide] SPAWN EVENT FIRED');
+      console.log('🟢 [B2C] SPAWN EVENT FIRED');
       try {
         bot._client.socket.setTimeout(24 * 60 * 60 * 1000); // FIX 4: 24h timeout
         bot._client.socket.setKeepAlive(true, 10000);
-      } catch (e) { console.log('⚠️ [DrakonTide] socket setup failed:', e.message); }
-      console.log('✅ [DrakonTide] Spawned');
+      } catch (e) { console.log('⚠️ [B2C] socket setup failed:', e.message); }
+      console.log('✅ [B2C] Spawned');
       bot.manualQuit = false;
       setTimeout(() => {
         if (!alive) return;
@@ -460,7 +460,7 @@ function createFarmBot () {
     bot.on('message', (jsonMsg, position) => {
       if (position === 'game_info') return;
       const msg = jsonMsg.toString();
-      console.log(`💬 [DrakonTide] ${msg}`);
+      console.log(`💬 [B2C] ${msg}`);
       if (!alive) return;
 
       if (farmingActive && !regrowing && /regrow/i.test(msg)) {
@@ -476,7 +476,7 @@ function createFarmBot () {
 
     bot.on('death', () => {
       if (!alive) return;
-      console.log('☠️ [DrakonTide] Died. Restarting...');
+      console.log('☠️ [B2C] Died. Restarting...');
       stopFarming();
       movingRight = true;
       setTimeout(() => {
@@ -487,7 +487,7 @@ function createFarmBot () {
     });
 
     bot.on('end', (reason) => {
-      console.log('📋 [DrakonTide] End reason:', reason);
+      console.log('📋 [B2C] End reason:', reason);
       alive = false;
       stopFarming();
       if (bot.pingShutdown) {
@@ -495,16 +495,16 @@ function createFarmBot () {
         return;
       }
       if (bot.manualQuit) {
-        console.log('🛑 Manual quit (regrow handoff) — not reconnecting as DrakonTide.');
+        console.log('🛑 Manual quit (regrow handoff) — not reconnecting as B2C.');
         return;
       }
       if (scriptEnabled) {
-        console.log('🔁 [DrakonTide] Disconnected unexpectedly. Reconnecting in 5s...');
+        console.log('🔁 [B2C] Disconnected unexpectedly. Reconnecting in 5s...');
         setTimeout(createFarmBot, 5000);
       }
     });
 
-    bot.on('error', err => console.log('❌ [DrakonTide] Error:', err.message));
+    bot.on('error', err => console.log('❌ [B2C] Error:', err.message));
 
     bot.quitBot = function () {
       bot.manualQuit = true;
