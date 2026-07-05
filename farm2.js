@@ -265,9 +265,9 @@ function createFarmBot () {
         if (handled || !alive) return;
         handled = true;
         bot.removeListener('windowOpen', onWindow);
-        console.log('⚠️ [Makhecha] windowOpen timed out — warping directly.');
-        bot.chat(WARP_COMMAND);
-        setTimeout(() => { if (alive) startFarming(); }, 5000);
+        console.log('⚠️ [Makhecha] windowOpen timed out — disconnecting to reconnect and start over.');
+        alive = false;
+        bot.quit();
       }, 6000);
 
       async function onWindow (window) {
@@ -532,9 +532,9 @@ function createRegrowBot () {
         if (handled || !alive) return;
         handled = true;
         bot.removeListener('windowOpen', onWindow);
-        console.log('⚠️ [LamaMC] windowOpen timed out — warping directly.');
-        bot.chat(WARP_COMMAND);
-        setTimeout(() => { if (alive) enterAfkPool(); }, 5000);
+        console.log('⚠️ [LamaMC] windowOpen timed out — disconnecting to reconnect and start over.');
+        alive = false;
+        bot.quit();
       }, 6000);
 
       async function onWindow (window) {
