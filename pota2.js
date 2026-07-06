@@ -469,6 +469,12 @@ function createFarmBot () {
         return;
       }
 
+      if (farmingActive && !regrowing && /you have 30 seconds to warp out/i.test(msg)) {
+        console.log('⏱️ "30 seconds to warp out" warning seen — triggering regrow mode.');
+        triggerRegrow('warp-out warning');
+        return;
+      }
+
       if (!farmingActive || pingPaused) return;
       const isPinged = PING_NAMES.some(n => msg.toLowerCase().includes(n.toLowerCase()));
       if (isPinged) handlePing();
@@ -519,7 +525,7 @@ function createFarmBot () {
   }
 }
 
-// ── Regrow bot (Beastro) ──────────────────────────────────────────────────────
+// ── Regrow bot (Areeb167) ──────────────────────────────────────────────────────
 function createRegrowBot () {
   if (!scriptEnabled) return;
   console.log(`🚀 createRegrowBot() called — connecting as ${REGROW_ACCOUNT.username}`);
@@ -547,7 +553,7 @@ function createRegrowBot () {
         if (handled || !alive) return;
         handled = true;
         bot.removeListener('windowOpen', onWindow);
-        console.log('⚠️ [Beastro] windowOpen timed out — disconnecting to reconnect.');
+        console.log('⚠️ [Areeb167] windowOpen timed out — disconnecting to reconnect.');
         alive = false;
         bot.quit();
       }, 6000);
@@ -563,9 +569,9 @@ function createRegrowBot () {
         if (slot && slot.name !== 'air') {
           try {
             await bot.clickWindow(20, 0, 1);
-            console.log('🎯 [Beastro] Clicked teleport item.');
+            console.log('🎯 [Areeb167] Clicked teleport item.');
           } catch (err) {
-            console.log('❌ [Beastro] GUI click error:', err.message);
+            console.log('❌ [Areeb167] GUI click error:', err.message);
           }
         }
         if (!alive) return;
@@ -581,10 +587,10 @@ function createRegrowBot () {
 
     // ── Regrow wait ───────────────────────────────────────────────────────────
     function startRegrowWait () {
-      console.log(`⏳ [Beastro] AFK regrow wait started (${REGROW_DURATION_MS / 1000}s).`);
+      console.log(`⏳ [Areeb167] AFK regrow wait started (${REGROW_DURATION_MS / 1000}s).`);
       regrowTimer = setTimeout(() => {
         if (!alive) return;
-        console.log(`✅ [Beastro] Regrow wait done — handing back to ${FARM_ACCOUNT.username}.`);
+        console.log(`✅ [Areeb167] Regrow wait done — handing back to ${FARM_ACCOUNT.username}.`);
         alive = false;
         bot.manualQuit = true;
         bot.quit();
@@ -596,11 +602,11 @@ function createRegrowBot () {
     function handlePing () {
       if (pingPaused || !alive) return;
       pingPaused = true;
-      console.log('🔔 [Beastro] Ping detected — going fully AFK for 5 min, then disconnecting.');
+      console.log('🔔 [Areeb167] Ping detected — going fully AFK for 5 min, then disconnecting.');
       if (regrowTimer) clearTimeout(regrowTimer);
       setTimeout(() => {
         if (!alive) return;
-        console.log('🛑 [Beastro] 5 min AFK done — disconnecting. Re-run the script to resume.');
+        console.log('🛑 [Areeb167] 5 min AFK done — disconnecting. Re-run the script to resume.');
         scriptEnabled    = false;
         bot.pingShutdown = true;
         alive            = false;
@@ -611,16 +617,16 @@ function createRegrowBot () {
     // ── Bot lifecycle ─────────────────────────────────────────────────────────
     bot.loadPlugin(pathfinder);
 
-    bot.on('login', () => console.log('🔌 [Beastro] Login packet sent.'));
-    bot._client.on('error', err => console.log('🔥 [Beastro] Client error:', err.message));
+    bot.on('login', () => console.log('🔌 [Areeb167] Login packet sent.'));
+    bot._client.on('error', err => console.log('🔥 [Areeb167] Client error:', err.message));
 
     bot.once('spawn', () => {
-      console.log('🟢 [Beastro] SPAWN EVENT FIRED');
+      console.log('🟢 [Areeb167] SPAWN EVENT FIRED');
       try {
         bot._client.socket.setTimeout(24 * 60 * 60 * 1000);
         bot._client.socket.setKeepAlive(true, 10000);
-      } catch (e) { console.log('⚠️ [Beastro] socket setup failed:', e.message); }
-      console.log('✅ [Beastro] Spawned');
+      } catch (e) { console.log('⚠️ [Areeb167] socket setup failed:', e.message); }
+      console.log('✅ [Areeb167] Spawned');
       bot.manualQuit = false;
       setTimeout(() => {
         if (!alive) return;
@@ -632,7 +638,7 @@ function createRegrowBot () {
     bot.on('message', (jsonMsg, position) => {
       if (position === 'game_info') return;
       const msg = jsonMsg.toString();
-      console.log(`💬 [Beastro] ${msg}`);
+      console.log(`💬 [Areeb167] ${msg}`);
       if (!alive || pingPaused) return;
       const isPinged = PING_NAMES.some(n => msg.toLowerCase().includes(n.toLowerCase()));
       if (isPinged) handlePing();
@@ -640,7 +646,7 @@ function createRegrowBot () {
 
     bot.on('death', () => {
       if (!alive) return;
-      console.log('☠️ [Beastro] Died — re-warping and resuming wait.');
+      console.log('☠️ [Areeb167] Died — re-warping and resuming wait.');
       if (regrowTimer) clearTimeout(regrowTimer);
       setTimeout(() => {
         if (!alive) return;
@@ -650,25 +656,25 @@ function createRegrowBot () {
     });
 
     bot.on('end', (reason) => {
-      console.log('📋 [Beastro] End reason:', reason);
+      console.log('📋 [Areeb167] End reason:', reason);
       alive = false;
       if (regrowTimer) clearTimeout(regrowTimer);
 
       if (bot.pingShutdown) {
-        console.log('🛑 [Beastro] Stopped after a ping — script paused. Re-run to resume.');
+        console.log('🛑 [Areeb167] Stopped after a ping — script paused. Re-run to resume.');
         return;
       }
       if (bot.manualQuit) {
-        console.log('🛑 [Beastro] Manual quit — not reconnecting as Beastro.');
+        console.log('🛑 [Areeb167] Manual quit — not reconnecting as Areeb167.');
         return;
       }
       if (scriptEnabled) {
-        console.log('🔁 [Beastro] Disconnected unexpectedly. Reconnecting in 5s...');
+        console.log('🔁 [Areeb167] Disconnected unexpectedly. Reconnecting in 5s...');
         setTimeout(createRegrowBot, 5000);
       }
     });
 
-    bot.on('error', err => console.log('❌ [Beastro] Error:', err.message));
+    bot.on('error', err => console.log('❌ [Areeb167] Error:', err.message));
 
   } catch (err) {
     console.log('💥 createRegrowBot crashed:', err);
