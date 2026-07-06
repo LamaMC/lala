@@ -453,6 +453,12 @@ function createFarmBot () {
         return;
       }
 
+      if (farmingActive && !regrowing && /you have 30 seconds to warp out/i.test(msg)) {
+        console.log('⏱️ "30 seconds to warp out" warning seen — triggering regrow mode.');
+        triggerRegrow('warp-out warning');
+        return;
+      }
+
       if (!farmingActive || pingPaused) return;
       const isPinged = PING_NAMES.some(n => msg.toLowerCase().includes(n.toLowerCase()));
       if (isPinged) handlePing();
