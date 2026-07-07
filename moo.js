@@ -475,8 +475,8 @@ function createFarmBot () {
         return;
       }
 
-      if (farmingActive && !regrowing && /regrow/i.test(msg)) {
-        console.log('🥔 "Server not found." seen in chat — triggering regrow mode.');
+      if (farmingActive && !regrowing && /Server not found./i.test(msg)) {
+        console.log('🥔 "Server not found" warning seen — triggering regrow mode.');
         triggerRegrow('chat keyword');
         return;
       }
