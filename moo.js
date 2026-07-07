@@ -245,9 +245,9 @@ function createFarmBot () {
       bot.look(Math.PI / 2, 0, true); // west (-X)
 
       const pos = bot.entity.position.floored();
-      for (let x = 1; x <= 5; x++) {
-        const block = bot.blockAt(pos.offset(-x, 1, 0));
-        if (!block || block.name !== 'potatoes' || block.metadata !== 7) continue;
+      for (let x = 1; x <= 4; x++) {
+        const block = bot.blockAt(pos.offset(-x, 2, 0));
+        if (!block || block.name !== 'red_mushroom') continue;
         const key = `${block.position.x},${block.position.y},${block.position.z}`;
         if (recentlyDug.has(key)) continue;
         recentlyDug.add(key);
