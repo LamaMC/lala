@@ -481,6 +481,12 @@ function createFarmBot () {
         return;
       }
 
+      if (!regrowing && /Unfortunately, we were unable to connect you to the server,/i.test(msg)) {
+        console.log('🥔 "Unfortunately, we were unable to connect you to the server," warning seen — triggering regrow mode.');
+        triggerRegrow('chat keyword');
+        return;
+      }
+
 
       if (!farmingActive || pingPaused) return;
       const isPinged = PING_NAMES.some(n => msg.toLowerCase().includes(n.toLowerCase()));
