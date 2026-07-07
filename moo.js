@@ -475,6 +475,12 @@ function createFarmBot () {
         return;
       }
 
+      if (farmingActive && !regrowing && /regrow/i.test(msg)) {
+        console.log('🥔 "Server not found." seen in chat — triggering regrow mode.');
+        triggerRegrow('chat keyword');
+        return;
+      }
+
       if (!farmingActive || pingPaused) return;
       const isPinged = PING_NAMES.some(n => msg.toLowerCase().includes(n.toLowerCase()));
       if (isPinged) handlePing();
