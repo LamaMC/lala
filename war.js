@@ -242,12 +242,12 @@ function createFarmBot () {
     function onTick () {
       if (!alive || !farmingActive || pingPaused || regrowing) return;
       if (breaksThisMinute >= MAX_BREAKS_PER_MINUTE) return;
-      bot.look(Math.PI / 2, 0, true); // west (-X)
+      bot.look(Math.PI / 2, 0, true);
 
       const pos = bot.entity.position.floored();
       for (let x = 1; x <= 5; x++) {
-        const block = bot.blockAt(pos.offset(-x, 1, 0));
-        if (!block || block.name !== 'potatoes' || block.metadata !== 7) continue;
+        const block = bot.blockAt(pos.offset(-x, 2, 0));
+        if (!block || block.name !== 'nether_wart' || block.metadata !== 3) continue;
         const key = `${block.position.x},${block.position.y},${block.position.z}`;
         if (recentlyDug.has(key)) continue;
         recentlyDug.add(key);
@@ -269,6 +269,7 @@ function createFarmBot () {
     function stopClicking () {
       bot.removeListener('physicsTick', onTick);
     }
+
 
     // ── GUI / warp ────────────────────────────────────────────────────────────
     function openTeleportGUI () {
