@@ -192,7 +192,7 @@ const SHIFT_DETECT_MAX = 256;
 const DIG_COOLDOWN_MS = 300;
 
 // Hard safety cap: never break more than this many blocks in a rolling 60s window.
-const MAX_BREAKS_PER_MINUTE = 1300;
+const MAX_BREAKS_PER_MINUTE = 1200;
 
 // Master switch. Set to false (e.g. by a ping) to fully stop the whole loop.
 let scriptEnabled = true;
