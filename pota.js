@@ -5,7 +5,7 @@ const path       = require('path');
 const { pathfinder, Movements, goals } = require('mineflayer-pathfinder');
 const { GoalNear } = goals;
 
-// ── Console noise suppression ─────────────────────────────────────────────────
+// â”€â”€ Console noise suppression â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const _warn  = console.warn;
 const _error = console.error;
 
@@ -21,42 +21,25 @@ console.warn = (m, ...a) => {
 };
 
 console.error = (m, ...a) => {
-  // Node.js passes Error objects directly — not just strings — so we extract .message.
+  // Node.js passes Error objects directly â€” not just strings â€” so we extract .message.
   const msg = (m instanceof Error) ? (m.message ?? '')
             : (typeof m === 'string') ? m
             : String(m ?? '');
-  if (msg.includes('partial packet')         ||
-      msg.includes('problem inflating')      ||
-      msg.includes('incorrect header check') ||
-      msg.includes('Z_DATA_ERROR')           ||
-      msg.includes('Chunk size is')          ||
-      msg.includes('uncompressed length')) return;
+  if (msg.includes('partial packet')              ||
+      msg.includes('problem inflating')           ||
+      msg.includes('incorrect header check')      ||
+      msg.includes('Z_DATA_ERROR')                ||
+      msg.includes('Chunk size is')               ||
+      msg.includes('uncompressed length')         ||
+      msg.includes('Missing characters')          ||
+      msg.includes('PartialReadError')            ||
+      msg.includes('"offset" is out of range')) return; // â† bad varint in Splitter
   _error(m, ...a);
 };
 
-// ── Deep patch: bad server packets no longer kill the connection ───────────────
-//
-// WHY THE PROTOTYPE PATCH WASN'T ENOUGH:
-//
-//  In newer Node.js, zlib.unzipSync internally calls zlibOnError() which runs
-//  this.destroy(err) BEFORE throwing.  destroy() schedules a stream 'error' event
-//  asynchronously (next tick), so even though our try-catch around _orig.call()
-//  catches the synchronous throw and calls cb(), the async 'error' event still
-//  fires afterwards and destroys the socket.
-//
-// ROOT FIX — patch zlib.unzipSync itself:
-//
-//  If unzipSync never throws, the async destroy path is never triggered.
-//  We return Buffer.alloc(0) on failure so compression.js can still call cb()
-//  without crashing (no .length access on null).  The empty buffer then reaches
-//  FullPacketParser, which fails to parse it; the FullPacketParser prototype
-//  patch (below) eats that error and calls cb() — packet silently dropped.
-//
-// SECONDARY: prototype patch on FullPacketParser for parse failures.
-//
+// â”€â”€ Deep patch: bad server packets no longer kill the connection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function patchMinecraftProtocol () {
-  // ── 0. Patch zlib.unzipSync — the actual root cause ──────────────────────
-  // Must run before any bot connects. zlib is a singleton so one patch covers all.
+  // â”€â”€ 0. Patch zlib.unzipSync â€” the actual root cause â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const zlib = require('zlib');
   if (!zlib._botPatched) {
     const _unzipSync = zlib.unzipSync;
@@ -64,27 +47,21 @@ function patchMinecraftProtocol () {
       try {
         return _unzipSync.call(this, buf, opts);
       } catch (_) {
-        // Return an empty buffer instead of throwing.
-        // compression.js calls cb(null, emptyBuf); afterTransform doesn't push
-        // empty data; FullPacketParser receives it, fails to parse, our prototype
-        // patch eats that error.  Net result: bad packet silently dropped.
         return Buffer.alloc(0);
       }
     };
     zlib._botPatched = true;
-    console.log('🔧 zlib.unzipSync patched (bad compressed packets → empty buffer → dropped)');
+    console.log('ðŸ”§ zlib.unzipSync patched (bad compressed packets â†’ empty buffer â†’ dropped)');
   }
 
-  // Try every combination of package name × src|lib layout.
   const pkgNames = ['minecraft-protocol', 'node-minecraft-protocol'];
-  const srcDirs  = ['src', 'lib'];   // src first — confirmed by stack trace
+  const srcDirs  = ['src', 'lib'];
 
   const variants = [];
   for (const pkg of pkgNames)
     for (const dir of srcDirs)
       variants.push([pkg, dir]);
 
-  // Also probe mineflayer's own nested copy if it has one.
   try {
     const mfDir = path.dirname(require.resolve('mineflayer'));
     for (const pkg of pkgNames)
@@ -92,12 +69,10 @@ function patchMinecraftProtocol () {
         variants.push([path.join(mfDir, 'node_modules', pkg), dir]);
   } catch (_) {}
 
-  let decomp = false, parser = false;
+  let decomp = false, parser = false, framer = false;
 
   for (const [base, dir] of variants) {
-    // ── 1. Decompressor prototype patch (belt-and-suspenders) ────────────────
-    // Handles the cb(err) async pattern for versions that do catch + cb(err).
-    // Also guards any remaining sync throws the zlib patch doesn't prevent.
+    // â”€â”€ 1. Decompressor prototype patch â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (!decomp) {
       try {
         const { createDecompressor } = require(`${base}/${dir}/transforms/compression`);
@@ -107,19 +82,17 @@ function patchMinecraftProtocol () {
         proto._transform = function (chunk, enc, cb) {
           try {
             _orig.call(this, chunk, enc, (err, data) => {
-              if (err) return cb();   // async cb(err) path → drop packet
+              if (err) return cb();
               cb(null, data);
             });
-          } catch (_) { cb(); }      // any remaining sync throw → drop packet
+          } catch (_) { cb(); }
         };
         decomp = true;
-        console.log(`🔧 Decompressor prototype patched (${base}/${dir})`);
+        console.log(`ðŸ”§ Decompressor prototype patched (${base}/${dir})`);
       } catch (_) {}
     }
 
-    // ── 2. Packet deserializer prototype patch ────────────────────────────────
-    // Catches the empty-buffer parse failure produced by the zlib patch above,
-    // plus any other ProtoDef "Chunk size is N but only M was read" errors.
+    // â”€â”€ 2. Packet deserializer prototype patch â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (!parser) {
       try {
         const mod  = require(`${base}/${dir}/transforms/serializer`);
@@ -130,61 +103,106 @@ function patchMinecraftProtocol () {
         Ctor.prototype._transform = function (chunk, enc, cb) {
           try {
             _orig.call(this, chunk, enc, (err) => {
-              if (err) return cb();   // drop unreadable packet, keep stream alive
+              if (err) return cb();
               cb();
             });
           } catch (_) { cb(); }
         };
         parser = true;
-        console.log(`🔧 Packet deserializer prototype patched (${base}/${dir})`);
+        console.log(`ðŸ”§ Packet deserializer prototype patched (${base}/${dir})`);
       } catch (_) {}
     }
 
-    if (decomp && parser) break;
+    // â”€â”€ 3. Packet framer (Splitter) prototype patch â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // Handles bad varint offsets (ERR_OUT_OF_RANGE) from corrupt server packets.
+    // The Splitter reads packet length as a varint; a mangled buffer causes
+    // readUInt8 to throw synchronously with an out-of-range offset, killing
+    // the connection. We catch it here and drop the bad packet instead.
+    if (!framer) {
+      try {
+        const { Splitter } = require(`${base}/${dir}/transforms/framing`);
+        if (!Splitter || typeof Splitter.prototype._transform !== 'function')
+          throw new Error('no Splitter');
+        const _orig = Splitter.prototype._transform;
+        Splitter.prototype._transform = function (chunk, enc, cb) {
+          try {
+            _orig.call(this, chunk, enc, cb);
+          } catch (err) {
+            if (err?.code === 'ERR_OUT_OF_RANGE' || err?.message?.includes('out of range')) {
+              return cb(); // drop corrupt frame, keep stream alive
+            }
+            cb(err); // real errors still propagate
+          }
+        };
+        framer = true;
+        console.log(`ðŸ”§ Splitter prototype patched (${base}/${dir})`);
+      } catch (_) {}
+    }
+
+    if (decomp && parser && framer) break;
   }
 
+  // â”€â”€ 3. FIX 3: Patch protodef.parsePacketBuffer directly â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Catches PartialReadError / "Missing characters in string" at the source.
+  try {
+    const { CompiledProtodef } = require('protodef/src/compiler');
+    if (typeof CompiledProtodef?.prototype?.parsePacketBuffer === 'function') {
+      const _orig = CompiledProtodef.prototype.parsePacketBuffer;
+      CompiledProtodef.prototype.parsePacketBuffer = function (...args) {
+        try { return _orig.apply(this, args); }
+        catch (_) { return { data: {}, metadata: { size: 0 } }; }
+      };
+      console.log('ðŸ”§ protodef.parsePacketBuffer patched (PartialReadError â†’ packet dropped)');
+    }
+  } catch (_) {}
+
   if (!decomp)
-    console.warn('⚠️  Decompressor not patched — inflate/unzip errors may cause disconnects');
+    console.warn('âš ï¸  Decompressor not patched â€” inflate/unzip errors may cause disconnects');
   if (!parser)
-    console.warn('⚠️  Packet parser not patched — protodef errors may cause disconnects');
+    console.warn('âš ï¸  Packet parser not patched â€” protodef errors may cause disconnects');
+  if (!framer)
+    console.warn('âš ï¸  Splitter not patched â€” bad varint offsets may cause disconnects');
 }
 
 patchMinecraftProtocol();
 
-// ── Last-resort safety net ────────────────────────────────────────────────────
+// â”€â”€ Last-resort safety net â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 process.on('uncaughtException', err => {
   const m     = err?.message ?? '';
   const stack = err?.stack   ?? '';
 
   // Compression / framing noise from the server
-  if (m.includes('incorrect header check') ||
-      m.includes('partial packet')          ||
-      m.includes('Chunk size is')           ||
-      m.includes('Z_DATA_ERROR')) return;
+  if (m.includes('incorrect header check')        ||
+      m.includes('partial packet')                ||
+      m.includes('Chunk size is')                 ||
+      m.includes('Z_DATA_ERROR')                  ||
+      m.includes('Missing characters')            ||
+      m.includes('"offset" is out of range')      || // â† bad varint in Splitter
+      (err?.code === 'ERR_OUT_OF_RANGE' && m.includes('offset')) ||
+      err?.name === 'PartialReadError') return;
 
-  // Block-palette assertion (blocks.js:360 — server reports different block-state
-  // count than mineflayer expects; harmless for farming, but would crash the bot)
+  // Block-palette assertion (harmless for farming)
   if (err?.code === 'ERR_ASSERTION' && stack.includes('blocks.js')) return;
 
-  throw err; // anything else is a real bug — let it crash visibly
+  throw err;
 });
 
-// ── Global config ─────────────────────────────────────────────────────────────
+// â”€â”€ Global config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const HOST         = 'fakepixel.me';
 const VERSION      = '1.8.9';
 const WARP_COMMAND = '/warp island';
 
-const FARM_ACCOUNT   = { username: 'Makhecha', loginCommand: '/login 3195' };
-const REGROW_ACCOUNT = { username: 'LamaMC',   loginCommand: '/login 3195' };
+const FARM_ACCOUNT   = { username: 'B2C', loginCommand: '/login 3043AA' };
+const REGROW_ACCOUNT = { username: 'Beastro', loginCommand: '/login 3043' };
 
 // Anyone mentioning either name in chat counts as a "ping"
 const PING_NAMES = [FARM_ACCOUNT.username, REGROW_ACCOUNT.username];
 
 const FARM_DURATION_MS   = 30 * 60 * 1000; // farm 30 min, then hand off to regrow
-const REGROW_DURATION_MS = 5 * 60 * 1000;  // sit AFK 5 min, then hand back
+const REGROW_DURATION_MS =  5 * 60 * 1000; // sit AFK 5 min, then hand back
 const PING_AFK_MS        =  5 * 60 * 1000; // stand still 5 min after a ping, then hard-stop
 
-// Instant XZ shift in this range (blocks) → regrow trigger, not normal walking.
+// Instant XZ shift in this range (blocks) â†’ regrow trigger, not normal walking.
 const SHIFT_DETECT_MIN = 4;
 const SHIFT_DETECT_MAX = 256;
 
@@ -197,10 +215,10 @@ const MAX_BREAKS_PER_MINUTE = 1200;
 // Master switch. Set to false (e.g. by a ping) to fully stop the whole loop.
 let scriptEnabled = true;
 
-// ── Farm bot (Makhecha) ───────────────────────────────────────────────────────
+// â”€â”€ Farm bot (B2C) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function createFarmBot () {
   if (!scriptEnabled) return;
-  console.log(`🚀 createFarmBot() called — connecting as ${FARM_ACCOUNT.username}`);
+  console.log(`ðŸš€ createFarmBot() called â€” connecting as ${FARM_ACCOUNT.username}`);
   try {
     const bot = mineflayer.createBot({
       host: HOST,
@@ -210,75 +228,62 @@ function createFarmBot () {
       checkTimeoutInterval: 60000,
     });
 
-    let alive          = true;
-    let farmingActive  = false;
-    let movingRight    = true;
-    let lastPos        = null;
-    let pingPaused     = false;
-    let regrowing      = false;
-    let farmTimer      = null;
-    let recentlyDug    = new Set();
+    let alive            = true;
+    let farmingActive    = false;
+    let movingRight      = true;
+    let lastPos          = null;
+    let pingPaused       = false;
+    let regrowing        = false;
+    let farmTimer        = null;
+    let recentlyDug      = new Set();
     let breaksThisMinute = 0;
 
-    // ── Clicking (instant nuke, same style as the potato farm) ──────────────────
-    const MELON_NAMES = new Set(['melon_block', 'melon']); // 1.8.9 uses melon_block
-
-    let lastDebugLog = 0;
-    const DEBUG_LOG_INTERVAL_MS = 1000; // once a second — physicsTick is 20/sec, unthrottled would spam
-
+    // â”€â”€ Clicking â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     function onTick () {
       if (!alive || !farmingActive || pingPaused || regrowing) return;
       if (breaksThisMinute >= MAX_BREAKS_PER_MINUTE) return;
       bot.look(Math.PI / 2, 0, true); // west (-X)
 
       const pos = bot.entity.position.floored();
-
-      // ── TEMP DIAGNOSTIC — remove once melons are confirmed breaking ─────────
-      const now = Date.now();
-      if (now - lastDebugLog > DEBUG_LOG_INTERVAL_MS) {
-        lastDebugLog = now;
-        console.log(1, 0, '→', bot.blockAt(pos.offset(-1, 0, 0))?.name);
+      for (let x = 1; x <= 5; x++) {
+        const block = bot.blockAt(pos.offset(-x, 1, 0));
+        if (!block || block.name !== 'potatoes' || block.metadata !== 7) continue;
+        const key = `${block.position.x},${block.position.y},${block.position.z}`;
+        if (recentlyDug.has(key)) continue;
+        recentlyDug.add(key);
+        setTimeout(() => recentlyDug.delete(key), DIG_COOLDOWN_MS);
+        breaksThisMinute++;
+        bot.swingArm('right');
+        bot._client.write('block_dig', { status: 0, location: block.position, face: 1 });
+        bot._client.write('block_dig', { status: 2, location: block.position, face: 1 });
+        if (breaksThisMinute >= MAX_BREAKS_PER_MINUTE) return;
       }
-      // ── END TEMP DIAGNOSTIC ───────────────────────────────────────────────────
-
-      const block = bot.blockAt(pos.offset(-1, 0, 0)); // always just 1 block ahead of wherever the bot is right now
-      if (!block || !MELON_NAMES.has(block.name)) return;
-      const key = `${block.position.x},${block.position.y},${block.position.z}`;
-      if (recentlyDug.has(key)) return;
-      recentlyDug.add(key);
-      setTimeout(() => recentlyDug.delete(key), DIG_COOLDOWN_MS);
-      breaksThisMinute++;
-      bot.swingArm('right');
-      bot._client.write('block_dig', { status: 0, location: block.position, face: 1 });
-      bot._client.write('block_dig', { status: 2, location: block.position, face: 1 });
     }
 
     function startClicking () {
       bot.setQuickBarSlot(0);
       bot.on('physicsTick', onTick);
-      console.log('🖱️ Attack started.');
+      console.log('ðŸ–±ï¸ Attack started.');
     }
 
     function stopClicking () {
       bot.removeListener('physicsTick', onTick);
     }
 
-    // ── GUI / warp ────────────────────────────────────────────────────────────
+    // â”€â”€ GUI / warp â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     function openTeleportGUI () {
       bot.setQuickBarSlot(0);
       bot.activateItem();
 
       let handled = false;
 
-      // Fallback: if the server never sends windowOpen (common on reconnects),
-      // skip the GUI entirely and warp directly after 6 s.
       const fallback = setTimeout(() => {
         if (handled || !alive) return;
         handled = true;
         bot.removeListener('windowOpen', onWindow);
-        console.log('⚠️ [Makhecha] windowOpen timed out — disconnecting to reconnect and start over.');
+        console.log('âš ï¸ [B2C] windowOpen timed out â€” disconnecting to reconnect.');
         alive = false;
-        bot.quit();
+        bot.quit(); // manualQuit stays false â†’ end handler reconnects automatically
       }, 6000);
 
       async function onWindow (window) {
@@ -292,9 +297,9 @@ function createFarmBot () {
         if (slot && slot.name !== 'air') {
           try {
             await bot.clickWindow(20, 0, 1);
-            console.log('🎯 Clicked teleport item.');
+            console.log('ðŸŽ¯ [B2C] Clicked teleport item.');
           } catch (err) {
-            console.log('❌ GUI click error:', err.message);
+            console.log('âŒ [B2C] GUI click error:', err.message);
           }
         }
         if (!alive) return;
@@ -308,26 +313,35 @@ function createFarmBot () {
       bot.once('windowOpen', onWindow);
     }
 
-    // ── Farming ───────────────────────────────────────────────────────────────
+    // â”€â”€ Farming â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     function startFarming () {
       if (farmingActive) return;
       farmingActive = true;
-      regrowing = false;
+      regrowing     = false;
 
       bot.setQuickBarSlot(0);
-      bot.look(Math.PI / 2, 0, true); // one-time initial face-west
-      console.log('🌾 Farming started.');
+      bot.look(Math.PI / 2, 0, true);
+      console.log('ðŸŒ¾ Farming started.');
 
       startClicking();
       setMoveDirection('right');
 
-      // 30-minute farm timer → hand off to regrow mode
+      // 30-minute farm timer â†’ hand off to regrow mode
       farmTimer = setTimeout(() => {
         if (!alive) return;
         triggerRegrow('30-minute farm timer');
       }, FARM_DURATION_MS);
 
-      // Reset block-break counter every 60s (1300/min safety cap)
+      // Nudge forward every 10s
+      const nudgeInterval = setInterval(() => {
+        if (!alive || !farmingActive) { clearInterval(nudgeInterval); return; }
+        if (pingPaused || regrowing) return;
+        bot.look(Math.PI / 2, 0, true);
+        bot.setControlState('forward', true);
+        setTimeout(() => bot.setControlState('forward', false), 100);
+      }, 10000);
+
+      // Reset block-break counter every 60s
       const breakCounterInterval = setInterval(() => {
         if (!alive || !farmingActive) { clearInterval(breakCounterInterval); return; }
         breaksThisMinute = 0;
@@ -337,19 +351,19 @@ function createFarmBot () {
       setTimeout(() => {
         if (!alive || !farmingActive) return;
         lastPos = bot.entity.position.clone();
-        console.log('📍 Position tracking started.');
+        console.log('ðŸ“ Position tracking started.');
 
         const poll = setInterval(() => {
           if (!alive || !farmingActive) { clearInterval(poll); return; }
           if (pingPaused || regrowing) { lastPos = bot.entity.position.clone(); return; }
 
-          const pos      = bot.entity.position;
-          const dropY    = lastPos.y - pos.y;
+          const pos       = bot.entity.position;
+          const dropY     = lastPos.y - pos.y;
           const horizDist = Math.hypot(pos.x - lastPos.x, pos.z - lastPos.z);
 
-          // Instant XZ shift 4-256 blocks → regrow trigger
+          // Instant XZ shift 4-256 blocks â†’ regrow trigger
           if (horizDist >= SHIFT_DETECT_MIN && horizDist <= SHIFT_DETECT_MAX) {
-            console.log(`🌀 Instant XZ shift (ΔXZ: ${horizDist.toFixed(1)}) — triggering regrow.`);
+            console.log(`ðŸŒ€ Instant XZ shift (Î”XZ: ${horizDist.toFixed(1)}) â€” triggering regrow.`);
             lastPos = pos.clone();
             triggerRegrow('position shift');
             return;
@@ -360,7 +374,7 @@ function createFarmBot () {
             lastPos = pos.clone();
             movingRight = !movingRight;
             const dir = movingRight ? 'right' : 'left';
-            console.log(`⬇️ Dropped ${dropY.toFixed(1)} blocks — switching to ${dir}`);
+            console.log(`â¬‡ï¸ Dropped ${dropY.toFixed(1)} blocks â€” switching to ${dir}`);
             setMoveDirection(dir);
           } else if (Math.abs(dropY) < 0.5) {
             lastPos = pos.clone();
@@ -375,6 +389,7 @@ function createFarmBot () {
       bot.setControlState('right', false);
       if (dir === 'right') bot.setControlState('right', true);
       else                 bot.setControlState('left',  true);
+      bot.look(Math.PI / 2, 0, true);
     }
 
     function stopAllMovement () {
@@ -388,14 +403,14 @@ function createFarmBot () {
       if (!farmingActive) return;
       farmingActive = false;
       stopAllMovement();
-      console.log('🛑 Farming stopped.');
+      console.log('ðŸ›‘ Farming stopped.');
     }
 
-    // ── Regrow handoff ────────────────────────────────────────────────────────
+    // â”€â”€ Regrow handoff â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     function triggerRegrow (reason) {
       if (regrowing || !alive) return;
       regrowing = true;
-      console.log(`🥔 Regrow triggered (${reason}). Handing off to ${REGROW_ACCOUNT.username}...`);
+      console.log(`ðŸ¥” Regrow triggered (${reason}). Handing off to ${REGROW_ACCOUNT.username}...`);
       if (farmTimer) clearTimeout(farmTimer);
       stopFarming();
       alive = false;
@@ -404,36 +419,36 @@ function createFarmBot () {
       setTimeout(() => { if (scriptEnabled) createRegrowBot(); }, 2000);
     }
 
-    // ── Ping handling ─────────────────────────────────────────────────────────
+    // â”€â”€ Ping handling â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     function handlePing () {
       if (pingPaused || !alive) return;
       pingPaused = true;
-      console.log('🔔 Ping detected — going fully AFK for 5 min, then disconnecting.');
+      console.log('ðŸ”” Ping detected â€” going fully AFK for 5 min, then disconnecting.');
       if (farmTimer) clearTimeout(farmTimer);
       stopAllMovement();
       setTimeout(() => {
         if (!alive) return;
-        console.log('🛑 5 min AFK done — disconnecting. Re-run the script to resume.');
-        scriptEnabled     = false;
-        bot.pingShutdown  = true;
-        alive             = false;
+        console.log('ðŸ›‘ 5 min AFK done â€” disconnecting. Re-run the script to resume.');
+        scriptEnabled    = false;
+        bot.pingShutdown = true;
+        alive            = false;
         bot.quit();
       }, PING_AFK_MS);
     }
 
-    // ── Bot lifecycle ─────────────────────────────────────────────────────────
+    // â”€â”€ Bot lifecycle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     bot.loadPlugin(pathfinder);
 
-    bot.on('login', () => console.log('🔌 [Makhecha] Login packet sent.'));
-    bot._client.on('error', err => console.log('🔥 [Makhecha] Client error:', err.message));
+    bot.on('login', () => console.log('ðŸ”Œ [B2C] Login packet sent.'));
+    bot._client.on('error', err => console.log('ðŸ”¥ [B2C] Client error:', err.message));
 
     bot.once('spawn', () => {
-      console.log('🟢 [Makhecha] SPAWN EVENT FIRED');
+      console.log('ðŸŸ¢ [B2C] SPAWN EVENT FIRED');
       try {
-        bot._client.socket.setTimeout(24 * 60 * 60 * 1000);
+        bot._client.socket.setTimeout(24 * 60 * 60 * 1000); // FIX 4: 24h timeout
         bot._client.socket.setKeepAlive(true, 10000);
-      } catch (e) { console.log('⚠️ socket setup failed:', e.message); }
-      console.log('✅ Spawned');
+      } catch (e) { console.log('âš ï¸ [B2C] socket setup failed:', e.message); }
+      console.log('âœ… [B2C] Spawned');
       bot.manualQuit = false;
       setTimeout(() => {
         if (!alive) return;
@@ -445,29 +460,29 @@ function createFarmBot () {
     bot.on('message', (jsonMsg, position) => {
       if (position === 'game_info') return;
       const msg = jsonMsg.toString();
-      console.log(`💬 [Makhecha] ${msg}`);
+      console.log(`ðŸ’¬ [B2C] ${msg}`);
       if (!alive) return;
 
       if (farmingActive && !regrowing && /regrow/i.test(msg)) {
-        console.log('🥔 "Regrow" seen in chat — triggering regrow mode.');
+        console.log('ðŸ¥” "Regrow" seen in chat â€” triggering regrow mode.');
         triggerRegrow('chat keyword');
         return;
       }
 
       if (farmingActive && !regrowing && /you have 10 seconds to warp out/i.test(msg)) {
-        console.log('⏱️ "10 seconds to warp out" warning seen — triggering regrow mode.');
+        console.log('â±ï¸ "10 seconds to warp out" warning seen â€” triggering regrow mode.');
         triggerRegrow('warp-out warning');
         return;
       }
 
       if (!regrowing && /Server not found./i.test(msg)) {
-        console.log('🥔 "Server not found" warning seen — triggering regrow mode.');
+        console.log('ðŸ¥” "Server not found" warning seen â€” triggering regrow mode.');
         triggerRegrow('chat keyword');
         return;
       }
 
       if (!regrowing && /Unfortunately, we were unable to connect you to the server,/i.test(msg)) {
-        console.log('🥔 "Unfortunately, we were unable to connect you to the server," warning seen — triggering regrow mode.');
+        console.log('ðŸ¥” "Unfortunately, we were unable to connect you to the server," warning seen â€” triggering regrow mode.');
         triggerRegrow('chat keyword');
         return;
       }
@@ -479,7 +494,7 @@ function createFarmBot () {
 
     bot.on('death', () => {
       if (!alive) return;
-      console.log('☠️ Died. Restarting...');
+      console.log('â˜ ï¸ [B2C] Died. Restarting...');
       stopFarming();
       movingRight = true;
       setTimeout(() => {
@@ -490,24 +505,24 @@ function createFarmBot () {
     });
 
     bot.on('end', (reason) => {
-      console.log('📋 [Makhecha] End reason:', reason);
+      console.log('ðŸ“‹ [B2C] End reason:', reason);
       alive = false;
       stopFarming();
       if (bot.pingShutdown) {
-        console.log('🛑 Stopped after a ping — script paused. Re-run to resume.');
+        console.log('ðŸ›‘ Stopped after a ping â€” script paused. Re-run to resume.');
         return;
       }
       if (bot.manualQuit) {
-        console.log('🛑 Manual quit (regrow handoff) — not reconnecting as Makhecha.');
+        console.log('ðŸ›‘ Manual quit (regrow handoff) â€” not reconnecting as B2C.');
         return;
       }
       if (scriptEnabled) {
-        console.log('🔁 Disconnected unexpectedly. Reconnecting as Makhecha in 5s...');
+        console.log('ðŸ” [B2C] Disconnected unexpectedly. Reconnecting in 5s...');
         setTimeout(createFarmBot, 5000);
       }
     });
 
-    bot.on('error', err => console.log('❌ [Makhecha] Error:', err.message));
+    bot.on('error', err => console.log('âŒ [B2C] Error:', err.message));
 
     bot.quitBot = function () {
       bot.manualQuit = true;
@@ -518,14 +533,14 @@ function createFarmBot () {
     };
 
   } catch (err) {
-    console.log('💥 createFarmBot crashed:', err);
+    console.log('ðŸ’¥ createFarmBot crashed:', err);
   }
 }
 
-// ── Regrow bot (LamaMC) ───────────────────────────────────────────────────────
+// â”€â”€ Regrow bot (Beastro) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function createRegrowBot () {
   if (!scriptEnabled) return;
-  console.log(`🚀 createRegrowBot() called — connecting as ${REGROW_ACCOUNT.username}`);
+  console.log(`ðŸš€ createRegrowBot() called â€” connecting as ${REGROW_ACCOUNT.username}`);
   try {
     const bot = mineflayer.createBot({
       host: HOST,
@@ -539,19 +554,18 @@ function createRegrowBot () {
     let pingPaused  = false;
     let regrowTimer = null;
 
-    // ── GUI / warp ────────────────────────────────────────────────────────────
+    // â”€â”€ GUI / warp â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     function openTeleportGUI () {
       bot.setQuickBarSlot(0);
       bot.activateItem();
 
       let handled = false;
 
-      // Fallback: if the server never sends windowOpen, warp directly after 6 s.
       const fallback = setTimeout(() => {
         if (handled || !alive) return;
         handled = true;
         bot.removeListener('windowOpen', onWindow);
-        console.log('⚠️ [LamaMC] windowOpen timed out — disconnecting to reconnect and start over.');
+        console.log('âš ï¸ [Beastro] windowOpen timed out â€” disconnecting to reconnect.');
         alive = false;
         bot.quit();
       }, 6000);
@@ -567,28 +581,28 @@ function createRegrowBot () {
         if (slot && slot.name !== 'air') {
           try {
             await bot.clickWindow(20, 0, 1);
-            console.log('🎯 [LamaMC] Clicked teleport item.');
+            console.log('ðŸŽ¯ [Beastro] Clicked teleport item.');
           } catch (err) {
-            console.log('❌ [LamaMC] GUI click error:', err.message);
+            console.log('âŒ [Beastro] GUI click error:', err.message);
           }
         }
         if (!alive) return;
         setTimeout(() => {
           if (!alive) return;
           bot.chat(WARP_COMMAND);
-          setTimeout(() => { if (alive) enterAfkPool(); }, 5000);
+          setTimeout(() => { if (alive) startRegrowWait(); }, 5000);
         }, 2000);
       }
 
       bot.once('windowOpen', onWindow);
     }
 
-    // ── AFK regrow wait ───────────────────────────────────────────────────────
-    function enterAfkPool () {
-      console.log(`⏳ [LamaMC] AFK regrow wait started (${REGROW_DURATION_MS / 1000}s).`);
+    // â”€â”€ Regrow wait â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    function startRegrowWait () {
+      console.log(`â³ [Beastro] AFK regrow wait started (${REGROW_DURATION_MS / 1000}s).`);
       regrowTimer = setTimeout(() => {
         if (!alive) return;
-        console.log(`✅ [LamaMC] Regrow wait done — handing back to ${FARM_ACCOUNT.username}.`);
+        console.log(`âœ… [Beastro] Regrow wait done â€” handing back to ${FARM_ACCOUNT.username}.`);
         alive = false;
         bot.manualQuit = true;
         bot.quit();
@@ -596,15 +610,15 @@ function createRegrowBot () {
       }, REGROW_DURATION_MS);
     }
 
-    // ── Ping handling ─────────────────────────────────────────────────────────
+    // â”€â”€ Ping handling â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     function handlePing () {
       if (pingPaused || !alive) return;
       pingPaused = true;
-      console.log('🔔 [LamaMC] Ping detected — going fully AFK for 5 min, then disconnecting.');
+      console.log('ðŸ”” [Beastro] Ping detected â€” going fully AFK for 5 min, then disconnecting.');
       if (regrowTimer) clearTimeout(regrowTimer);
       setTimeout(() => {
         if (!alive) return;
-        console.log('🛑 [LamaMC] 5 min AFK done — disconnecting. Re-run the script to resume.');
+        console.log('ðŸ›‘ [Beastro] 5 min AFK done â€” disconnecting. Re-run the script to resume.');
         scriptEnabled    = false;
         bot.pingShutdown = true;
         alive            = false;
@@ -612,19 +626,19 @@ function createRegrowBot () {
       }, PING_AFK_MS);
     }
 
-    // ── Bot lifecycle ─────────────────────────────────────────────────────────
+    // â”€â”€ Bot lifecycle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     bot.loadPlugin(pathfinder);
 
-    bot.on('login', () => console.log('🔌 [LamaMC] Login packet sent.'));
-    bot._client.on('error', err => console.log('🔥 [LamaMC] Client error:', err.message));
+    bot.on('login', () => console.log('ðŸ”Œ [Beastro] Login packet sent.'));
+    bot._client.on('error', err => console.log('ðŸ”¥ [Beastro] Client error:', err.message));
 
     bot.once('spawn', () => {
-      console.log('🟢 [LamaMC] SPAWN EVENT FIRED');
+      console.log('ðŸŸ¢ [Beastro] SPAWN EVENT FIRED');
       try {
         bot._client.socket.setTimeout(24 * 60 * 60 * 1000);
         bot._client.socket.setKeepAlive(true, 10000);
-      } catch (e) { console.log('⚠️ [LamaMC] socket setup failed:', e.message); }
-      console.log('✅ [LamaMC] Spawned');
+      } catch (e) { console.log('âš ï¸ [Beastro] socket setup failed:', e.message); }
+      console.log('âœ… [Beastro] Spawned');
       bot.manualQuit = false;
       setTimeout(() => {
         if (!alive) return;
@@ -636,7 +650,7 @@ function createRegrowBot () {
     bot.on('message', (jsonMsg, position) => {
       if (position === 'game_info') return;
       const msg = jsonMsg.toString();
-      console.log(`💬 [LamaMC] ${msg}`);
+      console.log(`ðŸ’¬ [Beastro] ${msg}`);
       if (!alive || pingPaused) return;
       const isPinged = PING_NAMES.some(n => msg.toLowerCase().includes(n.toLowerCase()));
       if (isPinged) handlePing();
@@ -644,40 +658,40 @@ function createRegrowBot () {
 
     bot.on('death', () => {
       if (!alive) return;
-      console.log('☠️ [LamaMC] Died — re-warping and resuming wait.');
+      console.log('â˜ ï¸ [Beastro] Died â€” re-warping and resuming wait.');
       if (regrowTimer) clearTimeout(regrowTimer);
       setTimeout(() => {
         if (!alive) return;
         bot.chat(WARP_COMMAND);
-        setTimeout(() => { if (alive) enterAfkPool(); }, 5000);
+        setTimeout(() => { if (alive) startRegrowWait(); }, 5000);
       }, 2000);
     });
 
     bot.on('end', (reason) => {
-      console.log('📋 [LamaMC] End reason:', reason);
+      console.log('ðŸ“‹ [Beastro] End reason:', reason);
       alive = false;
       if (regrowTimer) clearTimeout(regrowTimer);
 
       if (bot.pingShutdown) {
-        console.log('🛑 [LamaMC] Stopped after a ping — script paused. Re-run to resume.');
+        console.log('ðŸ›‘ [Beastro] Stopped after a ping â€” script paused. Re-run to resume.');
         return;
       }
       if (bot.manualQuit) {
-        console.log('🛑 [LamaMC] Manual quit — not reconnecting as LamaMC.');
+        console.log('ðŸ›‘ [Beastro] Manual quit â€” not reconnecting as Beastro.');
         return;
       }
       if (scriptEnabled) {
-        console.log('🔁 [LamaMC] Disconnected unexpectedly. Reconnecting in 5s...');
+        console.log('ðŸ” [Beastro] Disconnected unexpectedly. Reconnecting in 5s...');
         setTimeout(createRegrowBot, 5000);
       }
     });
 
-    bot.on('error', err => console.log('❌ [LamaMC] Error:', err.message));
+    bot.on('error', err => console.log('âŒ [Beastro] Error:', err.message));
 
   } catch (err) {
-    console.log('💥 createRegrowBot crashed:', err);
+    console.log('ðŸ’¥ createRegrowBot crashed:', err);
   }
 }
 
-// ── Entry point ───────────────────────────────────────────────────────────────
+// â”€â”€ Entry point â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 createFarmBot();
