@@ -469,8 +469,8 @@ function createFarmBot () {
         return;
       }
 
-      if (farmingActive && !regrowing && /you have 30 seconds to warp out/i.test(msg)) {
-        console.log('⏱️ "30 seconds to warp out" warning seen — triggering regrow mode.');
+      if (farmingActive && !regrowing && /you have 10 seconds to warp out/i.test(msg)) {
+        console.log('⏱️ "10 seconds to warp out" warning seen — triggering regrow mode.');
         triggerRegrow('warp-out warning');
         return;
       }
