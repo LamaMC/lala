@@ -221,7 +221,9 @@ function createFarmBot () {
     let breaksThisMinute = 0;
 
     // ── Clicking ──────────────────────────────────────────────────────────────
-    const MELON_CHECK_OFFSETS = [
+    const MELON_NAMES = new Set(['melon_block', 'melon']); // 1.8.9 uses melon_block
+
+const MELON_CHECK_OFFSETS = [
   { dx: 1, dy: 0 },
   { dx: 3, dy: -1 },
   { dx: 4, dy: -1 },
@@ -237,7 +239,7 @@ function onTick () {
   const pos = bot.entity.position.floored();
   for (const { dx, dy } of MELON_CHECK_OFFSETS) {
     const block = bot.blockAt(pos.offset(-dx, dy, 0));
-    if (!block || block.name !== 'melon') continue;
+    if (!block || !MELON_NAMES.has(block.name)) continue;
     const key = `${block.position.x},${block.position.y},${block.position.z}`;
     if (recentlyDug.has(key)) continue;
     recentlyDug.add(key);
