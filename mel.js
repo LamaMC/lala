@@ -250,6 +250,16 @@ function onTick () {
   }
 }
 
+function startClicking () {
+  bot.setQuickBarSlot(0);
+  bot.on('physicsTick', onTick);
+  console.log('🖱️ Attack started.');
+}
+
+function stopClicking () {
+  bot.removeListener('physicsTick', onTick);
+}
+
     // ── GUI / warp ────────────────────────────────────────────────────────────
     function openTeleportGUI () {
       bot.setQuickBarSlot(0);
