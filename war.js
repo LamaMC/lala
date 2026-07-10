@@ -270,7 +270,6 @@ function createFarmBot () {
       bot.removeListener('physicsTick', onTick);
     }
 
-
     // ── GUI / warp ────────────────────────────────────────────────────────────
     function openTeleportGUI () {
       bot.setQuickBarSlot(0);
