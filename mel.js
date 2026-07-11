@@ -1,16 +1,3 @@
-let alive = true, farmingActive = false, pingPaused = false, regrowing = false;
-let breaksThisMinute = 0, breaking = false;
-const recentlyDug = new Set();
-
-function onTick() { /* unchanged from before */ }
-function startClicking() { /* unchanged from before */ }
-function stopClicking() { /* unchanged from before */ }
-
-bot.on('chat', (username, message) => {
-  if (message === '!start') startClicking();
-  if (message === '!stop') stopClicking();
-});
-
 'use strict';
 const mineflayer = require('mineflayer');
 const Vec3       = require('vec3');
@@ -234,6 +221,19 @@ function createFarmBot () {
     let breaksThisMinute = 0;
 
     // ── Clicking ──────────────────────────────────────────────────────────────
+    let alive = true, farmingActive = false, pingPaused = false, regrowing = false;
+let breaksThisMinute = 0, breaking = false;
+const recentlyDug = new Set();
+
+function onTick() { /* unchanged from before */ }
+function startClicking() { /* unchanged from before */ }
+function stopClicking() { /* unchanged from before */ }
+
+bot.on('chat', (username, message) => {
+  if (message === '!start') startClicking();
+  if (message === '!stop') stopClicking();
+});
+    
     let breaking = false;
 
 function onTick () {
