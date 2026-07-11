@@ -222,35 +222,41 @@ function createFarmBot () {
 
     // ── Clicking ──────────────────────────────────────────────────────────────
     function onTick () {
-      if (!alive || !farmingActive || pingPaused || regrowing) return;
-      if (breaksThisMinute >= MAX_BREAKS_PER_MINUTE) return;
-      bot.look(-Math.PI / 2, 0, true);
+  if (!alive || !farmingActive || pingPaused || regrowing) return;
+  if (breaksThisMinute >= MAX_BREAKS_PER_MINUTE) return;
+  bot.look(-Math.PI / 2, 0, true);
 
-      const pos = bot.entity.position.floored();
-      for (let x = 1; x <= 4; x++) {
-        const block = bot.blockAt(pos.offset(x, 0, 0));
-        if (!block || block.name !== 'potatoes' || block.metadata !== 7) continue;
-        const key = `${block.position.x},${block.position.y},${block.position.z}`;
-        if (recentlyDug.has(key)) continue;
-        recentlyDug.add(key);
-        setTimeout(() => recentlyDug.delete(key), DIG_COOLDOWN_MS);
-        breaksThisMinute++;
-        bot.swingArm('right');
-        bot._client.write('block_dig', { status: 0, location: block.position, face: 1 });
-        bot._client.write('block_dig', { status: 2, location: block.position, face: 1 });
-        if (breaksThisMinute >= MAX_BREAKS_PER_MINUTE) return;
-      }
-    }
+  const pos = bot.entity.position.floored();
+  const melonOffsets = [
+    { dx: 1, dy: 0, dz: 0 },   // 1st: (75, 252, ...)
+    { dx: -3, dy: -1, dz: 0 }, // 2nd: (71, 251, ...)
+    { dx: -4, dy: -1, dz: 0 }  // 3rd: (70, 251, ...)
+  ];
 
-    function startClicking () {
-      bot.setQuickBarSlot(0);
-      bot.on('physicsTick', onTick);
-      console.log('🖱️ Attack started.');
-    }
+  for (const { dx, dy, dz } of melonOffsets) {
+    const block = bot.blockAt(pos.offset(dx, dy, dz));
+    if (!block || block.name !== 'melon_block') continue;
+    const key = `${block.position.x},${block.position.y},${block.position.z}`;
+    if (recentlyDug.has(key)) continue;
+    recentlyDug.add(key);
+    setTimeout(() => recentlyDug.delete(key), DIG_COOLDOWN_MS);
+    breaksThisMinute++;
+    bot.swingArm('right');
+    bot._client.write('block_dig', { status: 0, location: block.position, face: 1 });
+    bot._client.write('block_dig', { status: 2, location: block.position, face: 1 });
+    if (breaksThisMinute >= MAX_BREAKS_PER_MINUTE) return;
+  }
+}
 
-    function stopClicking () {
-      bot.removeListener('physicsTick', onTick);
-    }
+function startClicking () {
+  bot.setQuickBarSlot(0);
+  bot.on('physicsTick', onTick);
+  console.log('🖱️ Attack started.');
+}
+
+function stopClicking () {
+  bot.removeListener('physicsTick', onTick);
+}
 
     // ── GUI / warp ────────────────────────────────────────────────────────────
     function openTeleportGUI () {
