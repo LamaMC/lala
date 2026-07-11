@@ -221,16 +221,18 @@ function createFarmBot () {
     let breaksThisMinute = 0;
 
     // ── Clicking ──────────────────────────────────────────────────────────────
-    function onTick () {
-  if (!alive || !farmingActive || pingPaused || regrowing) return;
+    let breaking = false;
+
+function onTick () {
+  if (!alive || !farmingActive || pingPaused || regrowing || breaking) return;
   if (breaksThisMinute >= MAX_BREAKS_PER_MINUTE) return;
   bot.look(-Math.PI / 2, 0, true);
 
   const pos = bot.entity.position.floored();
   const melonOffsets = [
-    { dx: 1, dy: 0, dz: 0 },   // 1st: (75, 252, ...)
-    { dx: -3, dy: -1, dz: 0 }, // 2nd: (71, 251, ...)
-    { dx: -4, dy: -1, dz: 0 }  // 3rd: (70, 251, ...)
+    { dx: 1, dy: 0, dz: 0 },
+    { dx: -3, dy: -1, dz: 0 },
+    { dx: -4, dy: -1, dz: 0 }
   ];
 
   for (const { dx, dy, dz } of melonOffsets) {
@@ -238,24 +240,18 @@ function createFarmBot () {
     if (!block || block.name !== 'melon_block') continue;
     const key = `${block.position.x},${block.position.y},${block.position.z}`;
     if (recentlyDug.has(key)) continue;
+
     recentlyDug.add(key);
     setTimeout(() => recentlyDug.delete(key), DIG_COOLDOWN_MS);
     breaksThisMinute++;
-    bot.swingArm('right');
-    bot._client.write('block_dig', { status: 0, location: block.position, face: 1 });
-    bot._client.write('block_dig', { status: 2, location: block.position, face: 1 });
-    if (breaksThisMinute >= MAX_BREAKS_PER_MINUTE) return;
+    breaking = true;
+
+    bot.dig(block)
+      .catch(err => console.log('⚠️ dig failed:', err.message))
+      .finally(() => { breaking = false; });
+
+    return; // one dig in flight at a time, loop resumes next tick
   }
-}
-
-function startClicking () {
-  bot.setQuickBarSlot(0);
-  bot.on('physicsTick', onTick);
-  console.log('🖱️ Attack started.');
-}
-
-function stopClicking () {
-  bot.removeListener('physicsTick', onTick);
 }
 
     // ── GUI / warp ────────────────────────────────────────────────────────────
