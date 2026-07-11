@@ -228,7 +228,7 @@ function createFarmBot () {
 
       const pos = bot.entity.position.floored();
       for (let x = 1; x <= 4; x++) {
-        const block = bot.blockAt(pos.offset(x, 0, 0));
+        const block = bot.blockAt(pos.offset(x, 1, 0));
         if (!block || block.name !== 'melon_block') continue;
         const key = `${block.position.x},${block.position.y},${block.position.z}`;
         if (recentlyDug.has(key)) continue;
