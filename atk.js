@@ -11,21 +11,40 @@ console.warn = (msg, ...args) => {
 const HOST = 'fakepixel.me';
 const VERSION = '1.8.9';
 const WARP_COMMAND = '/warp island';
+const RECONNECT_MS = 5000; // was 10000
 
 const ACCOUNTS = [
   { username: 'LamaMC', registerCommand: '/register 3195 3195', loginCommand: '/login 3195' },
   { username: 'Enrage', registerCommand: '/register 3195 3195', loginCommand: '/login 3195' }
 ];
 
-// Anyone mentioning a bot's own name in chat counts as a "ping" for that bot
-const PING_AFK_MS = 5 * 60 * 1000; // stand still 5 min after a ping, then hard-stop
-
-// Registry so the terminal bridge can route messages to a specific bot by name
 const activeBots = {}; // username -> bot instance
+
+// ── Duplicate-message filter ───────────────────────────────────────────
+// If two bots receive the identical chat line within this window, only
+// print it once instead of once per bot.
+const DEDUPE_WINDOW_MS = 1000;
+const recentMessages = new Map(); // msg text -> timestamp last printed
+
+function printOnce(msg) {
+  const now = Date.now();
+  const last = recentMessages.get(msg);
+  if (last && now - last < DEDUPE_WINDOW_MS) {
+    return; // duplicate within window, skip
+  }
+  recentMessages.set(msg, now);
+  console.log(`💬 ${msg}`);
+  // periodic cleanup so the map doesn't grow forever
+  if (recentMessages.size > 200) {
+    const cutoff = now - DEDUPE_WINDOW_MS;
+    for (const [k, t] of recentMessages) {
+      if (t < cutoff) recentMessages.delete(k);
+    }
+  }
+}
 
 // ── Bot factory ──────────────────────────────────────────────────────────
 function createBot(account) {
-  if (!account.scriptEnabled && account.scriptEnabled !== undefined ? false : false) {} // no-op guard placeholder
   if (account._disabled) return;
   console.log(`🚀 createBot() called — connecting as ${account.username}`);
   try {
@@ -40,7 +59,6 @@ function createBot(account) {
     activeBots[account.username] = bot;
 
     let alive = true;
-    let pingPaused = false;
     let registered = account._registeredOnce || false;
 
     // ── GUI / warp ────────────────────────────────────────────────────────
@@ -71,21 +89,6 @@ function createBot(account) {
 
     function enterAfkPool() {
       console.log(`💤 [${account.username}] In AFK pool — idling indefinitely, keep-alive only.`);
-    }
-
-    // ── Ping handling: stand still 5 min, then hard-stop ─────────────────
-    function handlePing() {
-      if (pingPaused || !alive) return;
-      pingPaused = true;
-      console.log(`🔔 [${account.username}] Ping detected — going fully AFK for 5 min, then disconnecting until restarted.`);
-      setTimeout(() => {
-        if (!alive) return;
-        console.log(`🛑 [${account.username}] 5 min AFK complete — disconnecting. Re-run to resume.`);
-        account._disabled = true;
-        bot.pingShutdown = true;
-        alive = false;
-        bot.quit();
-      }, PING_AFK_MS);
     }
 
     // ── Bot lifecycle ─────────────────────────────────────────────────────
@@ -121,13 +124,11 @@ function createBot(account) {
       }, 2000);
     });
 
-    // ── Message handler ─────────────────────────────────────────────────
+    // ── Message handler (deduped, no ping detection) ──────────────────────
     bot.on('message', (jsonMsg, position) => {
       if (position === 'game_info') return;
       const msg = jsonMsg.toString();
-      console.log(`💬 [${account.username}] ${msg}`);
-      if (!alive || pingPaused) return;
-      if (msg.toLowerCase().includes(account.username.toLowerCase())) handlePing();
+      printOnce(msg);
     });
 
     bot.on('death', () => {
@@ -139,17 +140,13 @@ function createBot(account) {
       console.log(`📋 [${account.username}] End reason:`, reason);
       alive = false;
       delete activeBots[account.username];
-      if (bot.pingShutdown) {
-        console.log(`🛑 [${account.username}] Stopped after a ping — re-run to resume.`);
-        return;
-      }
       if (bot.manualQuit) {
         console.log(`🛑 [${account.username}] Manual quit — not reconnecting.`);
         return;
       }
       if (!account._disabled) {
-        console.log(`🔁 [${account.username}] Disconnected unexpectedly. Reconnecting in 10s...`);
-        setTimeout(() => createBot(account), 10000);
+        console.log(`🔁 [${account.username}] Disconnected unexpectedly. Reconnecting in ${RECONNECT_MS / 1000}s...`);
+        setTimeout(() => createBot(account), RECONNECT_MS);
       }
     });
 
@@ -167,12 +164,6 @@ function createBot(account) {
 }
 
 // ── Terminal → in-game chat bridge ──────────────────────────────────────
-// Usage:
-//   hello there              -> sends "hello there" from BOTH bots
-//   LamaMC: hello            -> sends "hello" only from LamaMC
-//   Enrage: hello            -> sends "hello" only from Enrage
-//   quit LamaMC              -> disconnects only LamaMC
-//   quit all                 -> disconnects both bots
 process.stdin.setEncoding('utf8');
 process.stdin.on('data', (input) => {
   const line = input.toString().trim();
