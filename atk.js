@@ -14,9 +14,18 @@ const WARP_COMMAND = '/warp island';
 const RECONNECT_MS = 5000; // was 10000
 
 const ACCOUNTS = [
-  { username: 'LamaMC', registerCommand: '/register 3195 3195', loginCommand: '/login 3195' },
-  { username: 'Enrage', registerCommand: '/register 3195 3195', loginCommand: '/login 3195' }
+  { username: 'Mantaa707', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Octopi888', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Sirenn303', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Kelpys101', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Walrus404', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Hydraa999', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Viperr505', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Corall606', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Pelica202', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Nautil111', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' }
 ];
+
 
 const activeBots = {}; // username -> bot instance
 
