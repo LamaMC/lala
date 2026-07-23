@@ -173,15 +173,25 @@ function createFarmBot () {
     let breaking       = false;
 
     // ── Clicking ──────────────────────────────────────────────────────────────
-        function onTick () {
-      // 1. Completely stop if the bot isn't meant to be farming right now
+    function startClicking() {
+      bot.on('physicsTick', onTick);
+    }
+
+    function stopClicking() {
+      bot.removeListener('physicsTick', onTick);
+    }
+
+    bot.on('chat', (username, message) => {
+      if (message === '!start') startClicking();
+      if (message === '!stop') stopClicking();
+    });
+
+    function onTick () {
       if (!alive || !farmingActive || pingPaused || regrowing) return;
 
-      // 2. PERFECT POV LOCK: Force the camera angle every single tick, 
-      // regardless of whether the bot is breaking a block or not.
+      // Force perfect POV lock every tick before checking for blocks
       bot.look(-Math.PI / 2, 0, true);
 
-      // 3. Now check if we are currently breaking or rate-limited before finding a new block
       if (breaking || breaksThisMinute >= MAX_BREAKS_PER_MINUTE) return;
 
       const pos = bot.entity.position.floored();
