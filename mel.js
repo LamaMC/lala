@@ -21,7 +21,6 @@ console.warn = (m, ...a) => {
 };
 
 console.error = (m, ...a) => {
-  // Node.js passes Error objects directly — not just strings — so we extract .message.
   const msg = (m instanceof Error) ? (m.message ?? '')
             : (typeof m === 'string') ? m
             : String(m ?? '');
@@ -34,29 +33,8 @@ console.error = (m, ...a) => {
   _error(m, ...a);
 };
 
-// ── Deep patch: bad server packets no longer kill the connection ───────────────
-//
-// WHY THE PROTOTYPE PATCH WASN'T ENOUGH:
-//
-//  In newer Node.js, zlib.unzipSync internally calls zlibOnError() which runs
-//  this.destroy(err) BEFORE throwing.  destroy() schedules a stream 'error' event
-//  asynchronously (next tick), so even though our try-catch around _orig.call()
-//  catches the synchronous throw and calls cb(), the async 'error' event still
-//  fires afterwards and destroys the socket.
-//
-// ROOT FIX — patch zlib.unzipSync itself:
-//
-//  If unzipSync never throws, the async destroy path is never triggered.
-//  We return Buffer.alloc(0) on failure so compression.js can still call cb()
-//  without crashing (no .length access on null).  The empty buffer then reaches
-//  FullPacketParser, which fails to parse it; the FullPacketParser prototype
-//  patch (below) eats that error and calls cb() — packet silently dropped.
-//
-// SECONDARY: prototype patch on FullPacketParser for parse failures.
-//
+// ── Protocol patching ─────────────────────────────────────────────────────────
 function patchMinecraftProtocol () {
-  // ── 0. Patch zlib.unzipSync — the actual root cause ──────────────────────
-  // Must run before any bot connects. zlib is a singleton so one patch covers all.
   const zlib = require('zlib');
   if (!zlib._botPatched) {
     const _unzipSync = zlib.unzipSync;
@@ -64,27 +42,21 @@ function patchMinecraftProtocol () {
       try {
         return _unzipSync.call(this, buf, opts);
       } catch (_) {
-        // Return an empty buffer instead of throwing.
-        // compression.js calls cb(null, emptyBuf); afterTransform doesn't push
-        // empty data; FullPacketParser receives it, fails to parse, our prototype
-        // patch eats that error.  Net result: bad packet silently dropped.
         return Buffer.alloc(0);
       }
     };
     zlib._botPatched = true;
-    console.log('🔧 zlib.unzipSync patched (bad compressed packets → empty buffer → dropped)');
+    console.log('🔧 zlib.unzipSync patched');
   }
 
-  // Try every combination of package name × src|lib layout.
   const pkgNames = ['minecraft-protocol', 'node-minecraft-protocol'];
-  const srcDirs  = ['src', 'lib'];   // src first — confirmed by stack trace
-
+  const srcDirs  = ['src', 'lib'];
   const variants = [];
+  
   for (const pkg of pkgNames)
     for (const dir of srcDirs)
       variants.push([pkg, dir]);
 
-  // Also probe mineflayer's own nested copy if it has one.
   try {
     const mfDir = path.dirname(require.resolve('mineflayer'));
     for (const pkg of pkgNames)
@@ -95,9 +67,6 @@ function patchMinecraftProtocol () {
   let decomp = false, parser = false;
 
   for (const [base, dir] of variants) {
-    // ── 1. Decompressor prototype patch (belt-and-suspenders) ────────────────
-    // Handles the cb(err) async pattern for versions that do catch + cb(err).
-    // Also guards any remaining sync throws the zlib patch doesn't prevent.
     if (!decomp) {
       try {
         const { createDecompressor } = require(`${base}/${dir}/transforms/compression`);
@@ -107,19 +76,16 @@ function patchMinecraftProtocol () {
         proto._transform = function (chunk, enc, cb) {
           try {
             _orig.call(this, chunk, enc, (err, data) => {
-              if (err) return cb();   // async cb(err) path → drop packet
+              if (err) return cb();
               cb(null, data);
             });
-          } catch (_) { cb(); }      // any remaining sync throw → drop packet
+          } catch (_) { cb(); }
         };
         decomp = true;
-        console.log(`🔧 Decompressor prototype patched (${base}/${dir})`);
+        console.log(`🔧 Decompressor patched (${base}/${dir})`);
       } catch (_) {}
     }
 
-    // ── 2. Packet deserializer prototype patch ────────────────────────────────
-    // Catches the empty-buffer parse failure produced by the zlib patch above,
-    // plus any other ProtoDef "Chunk size is N but only M was read" errors.
     if (!parser) {
       try {
         const mod  = require(`${base}/${dir}/transforms/serializer`);
@@ -130,23 +96,18 @@ function patchMinecraftProtocol () {
         Ctor.prototype._transform = function (chunk, enc, cb) {
           try {
             _orig.call(this, chunk, enc, (err) => {
-              if (err) return cb();   // drop unreadable packet, keep stream alive
+              if (err) return cb();
               cb();
             });
           } catch (_) { cb(); }
         };
         parser = true;
-        console.log(`🔧 Packet deserializer prototype patched (${base}/${dir})`);
+        console.log(`🔧 Packet parser patched (${base}/${dir})`);
       } catch (_) {}
     }
 
     if (decomp && parser) break;
   }
-
-  if (!decomp)
-    console.warn('⚠️  Decompressor not patched — inflate/unzip errors may cause disconnects');
-  if (!parser)
-    console.warn('⚠️  Packet parser not patched — protodef errors may cause disconnects');
 }
 
 patchMinecraftProtocol();
@@ -156,17 +117,14 @@ process.on('uncaughtException', err => {
   const m     = err?.message ?? '';
   const stack = err?.stack   ?? '';
 
-  // Compression / framing noise from the server
   if (m.includes('incorrect header check') ||
       m.includes('partial packet')          ||
       m.includes('Chunk size is')           ||
       m.includes('Z_DATA_ERROR')) return;
 
-  // Block-palette assertion (blocks.js:360 — server reports different block-state
-  // count than mineflayer expects; harmless for farming, but would crash the bot)
   if (err?.code === 'ERR_ASSERTION' && stack.includes('blocks.js')) return;
 
-  throw err; // anything else is a real bug — let it crash visibly
+  throw err;
 });
 
 // ── Global config ─────────────────────────────────────────────────────────────
@@ -177,24 +135,17 @@ const WARP_COMMAND = '/warp island';
 const FARM_ACCOUNT   = { username: 'Makhecha', loginCommand: '/login 3195' };
 const REGROW_ACCOUNT = { username: 'LamaMC',   loginCommand: '/login 3195' };
 
-// Anyone mentioning either name in chat counts as a "ping"
 const PING_NAMES = [FARM_ACCOUNT.username, REGROW_ACCOUNT.username];
 
-const FARM_DURATION_MS   = 30 * 60 * 1000; // farm 30 min, then hand off to regrow
-const REGROW_DURATION_MS = 5 * 60 * 1000;  // sit AFK 5 min, then hand back
-const PING_AFK_MS        =  5 * 60 * 1000; // stand still 5 min after a ping, then hard-stop
+const FARM_DURATION_MS   = 30 * 60 * 1000;
+const REGROW_DURATION_MS = 5 * 60 * 1000; 
+const PING_AFK_MS        = 5 * 60 * 1000; 
 
-// Instant XZ shift in this range (blocks) → regrow trigger, not normal walking.
 const SHIFT_DETECT_MIN = 4;
 const SHIFT_DETECT_MAX = 256;
-
-// How long (ms) to skip re-targeting a block right after digging it.
 const DIG_COOLDOWN_MS = 300;
-
-// Hard safety cap: never break more than this many blocks in a rolling 60s window.
 const MAX_BREAKS_PER_MINUTE = 1300;
 
-// Master switch. Set to false (e.g. by a ping) to fully stop the whole loop.
 let scriptEnabled = true;
 
 // ── Farm bot (Makhecha) ───────────────────────────────────────────────────────
@@ -219,53 +170,52 @@ function createFarmBot () {
     let farmTimer      = null;
     let recentlyDug    = new Set();
     let breaksThisMinute = 0;
+    let breaking       = false;
 
     // ── Clicking ──────────────────────────────────────────────────────────────
-    let alive = true, farmingActive = false, pingPaused = false, regrowing = false;
-let breaksThisMinute = 0, breaking = false;
-const recentlyDug = new Set();
+    function startClicking() {
+      bot.on('physicsTick', onTick);
+    }
 
-function onTick() { /* unchanged from before */ }
-function startClicking() { /* unchanged from before */ }
-function stopClicking() { /* unchanged from before */ }
+    function stopClicking() {
+      bot.removeListener('physicsTick', onTick);
+    }
 
-bot.on('chat', (username, message) => {
-  if (message === '!start') startClicking();
-  if (message === '!stop') stopClicking();
-});
-    
-    let breaking = false;
+    bot.on('chat', (username, message) => {
+      if (message === '!start') startClicking();
+      if (message === '!stop') stopClicking();
+    });
 
-function onTick () {
-  if (!alive || !farmingActive || pingPaused || regrowing || breaking) return;
-  if (breaksThisMinute >= MAX_BREAKS_PER_MINUTE) return;
-  bot.look(-Math.PI / 2, 0, true);
+    function onTick () {
+      if (!alive || !farmingActive || pingPaused || regrowing || breaking) return;
+      if (breaksThisMinute >= MAX_BREAKS_PER_MINUTE) return;
+      bot.look(-Math.PI / 2, 0, true);
 
-  const pos = bot.entity.position.floored();
-  const melonOffsets = [
-    { dx: 1, dy: 0, dz: 0 },
-    { dx: -3, dy: -1, dz: 0 },
-    { dx: -4, dy: -1, dz: 0 }
-  ];
+      const pos = bot.entity.position.floored();
+      const melonOffsets = [
+        { dx: 1, dy: 0, dz: 0 },
+        { dx: -3, dy: -1, dz: 0 },
+        { dx: -4, dy: -1, dz: 0 }
+      ];
 
-  for (const { dx, dy, dz } of melonOffsets) {
-    const block = bot.blockAt(pos.offset(dx, dy, dz));
-    if (!block || block.name !== 'melon_block') continue;
-    const key = `${block.position.x},${block.position.y},${block.position.z}`;
-    if (recentlyDug.has(key)) continue;
+      for (const { dx, dy, dz } of melonOffsets) {
+        const block = bot.blockAt(pos.offset(dx, dy, dz));
+        if (!block || block.name !== 'melon_block') continue;
+        const key = `${block.position.x},${block.position.y},${block.position.z}`;
+        if (recentlyDug.has(key)) continue;
 
-    recentlyDug.add(key);
-    setTimeout(() => recentlyDug.delete(key), DIG_COOLDOWN_MS);
-    breaksThisMinute++;
-    breaking = true;
+        recentlyDug.add(key);
+        setTimeout(() => recentlyDug.delete(key), DIG_COOLDOWN_MS);
+        breaksThisMinute++;
+        breaking = true;
 
-    bot.dig(block)
-      .catch(err => console.log('⚠️ dig failed:', err.message))
-      .finally(() => { breaking = false; });
+        bot.dig(block)
+          .catch(err => console.log('⚠️ dig failed:', err.message))
+          .finally(() => { breaking = false; });
 
-    return; // one dig in flight at a time, loop resumes next tick
-  }
-}
+        return; 
+      }
+    }
 
     // ── GUI / warp ────────────────────────────────────────────────────────────
     function openTeleportGUI () {
@@ -274,8 +224,6 @@ function onTick () {
 
       let handled = false;
 
-      // Fallback: if the server never sends windowOpen (common on reconnects),
-      // skip the GUI entirely and warp directly after 6 s.
       const fallback = setTimeout(() => {
         if (handled || !alive) return;
         handled = true;
@@ -325,13 +273,11 @@ function onTick () {
       startClicking();
       setMoveDirection('right');
 
-      // 30-minute farm timer → hand off to regrow mode
       farmTimer = setTimeout(() => {
         if (!alive) return;
         triggerRegrow('30-minute farm timer');
       }, FARM_DURATION_MS);
 
-      // Nudge forward every 10s
       const nudgeInterval = setInterval(() => {
         if (!alive || !farmingActive) { clearInterval(nudgeInterval); return; }
         if (pingPaused || regrowing) return;
@@ -340,13 +286,11 @@ function onTick () {
         setTimeout(() => bot.setControlState('forward', false), 100);
       }, 10000);
 
-      // Reset block-break counter every 60s (1300/min safety cap)
       const breakCounterInterval = setInterval(() => {
         if (!alive || !farmingActive) { clearInterval(breakCounterInterval); return; }
         breaksThisMinute = 0;
       }, 60 * 1000);
 
-      // Wait 3s for the bot to settle after warp before starting polls
       setTimeout(() => {
         if (!alive || !farmingActive) return;
         lastPos = bot.entity.position.clone();
@@ -360,7 +304,6 @@ function onTick () {
           const dropY    = lastPos.y - pos.y;
           const horizDist = Math.hypot(pos.x - lastPos.x, pos.z - lastPos.z);
 
-          // Instant XZ shift 4-256 blocks → regrow trigger
           if (horizDist >= SHIFT_DETECT_MIN && horizDist <= SHIFT_DETECT_MAX) {
             console.log(`🌀 Instant XZ shift (ΔXZ: ${horizDist.toFixed(1)}) — triggering regrow.`);
             lastPos = pos.clone();
@@ -368,7 +311,6 @@ function onTick () {
             return;
           }
 
-          // Normal farm row drop (2-3 blocks Y)
           if (dropY >= 2 && dropY <= 3) {
             lastPos = pos.clone();
             movingRight = !movingRight;
@@ -560,7 +502,6 @@ function createRegrowBot () {
 
       let handled = false;
 
-      // Fallback: if the server never sends windowOpen, warp directly after 6 s.
       const fallback = setTimeout(() => {
         if (handled || !alive) return;
         handled = true;
