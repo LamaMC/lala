@@ -14,6 +14,7 @@ const WARP_COMMAND = '/warp island';
 const RECONNECT_MS = 5000; // was 10000
 
 const ACCOUNTS = [
+  // --- Original 10 ---
   { username: 'Mantaa707', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
   { username: 'Octopi888', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
   { username: 'Sirenn303', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
@@ -23,8 +24,109 @@ const ACCOUNTS = [
   { username: 'Viperr505', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
   { username: 'Corall606', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
   { username: 'Pelica202', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Nautil111', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' }
+  { username: 'Nautil111', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+
+  // --- Additional 90 (Total 100) ---
+  { username: 'Salmon102', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Marlin103', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Shrimp104', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Urchin105', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Dugong106', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Beluga107', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Whalee108', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Mussell109', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Oyster110', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Barram112', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+
+  { username: 'Gudgeo113', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Medusa114', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Polyps115', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Spongy116', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Snappe117', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Anemno118', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Angler119', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Triton120', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Abysss121', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Trench122', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+
+  { username: 'Lagoon123', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Reeffs124', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Oceanic125', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Tsunami126', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Aqueus127', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Marine128', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Pelagi129', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Benths130', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Deepsea131', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Finnees132', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+
+  { username: 'Gillee133', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Guppyy134', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Minnow135', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Clamm210', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Krilll211', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Orcaas212', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Limpets213', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Plankt214', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Barnac215', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Squids216', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+
+  { username: 'Crabby217', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Lobste218', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Prawns219', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Hermit220', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Turtle221', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Otterr222', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Corals223', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Gorgon224', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Brittle225', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Seaurs226', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+
+  { username: 'Cucumb227', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Chiton228', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Abalon229', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Conchs230', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Cowrie231', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Nudibr232', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Whelks233', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Scallo234', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Cuttle235', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Fangto301', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+
+  { username: 'Gulper302', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Blobsf304', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Dragon305', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Hatche306', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Lanter307', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Flashl308', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Anomal309', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Trilob310', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Ammoni311', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Euryp3312', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+
+  { username: 'Dunkle313', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Megalo314', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Plesio315', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Mosasa316', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Ichthy317', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Xiphan318', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Tarpon319', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Bonefi320', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Permit321', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Redfis322', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+
+  { username: 'Halibu323', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Flound324', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Turbot325', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Haddock326', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Polloc327', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Whitin328', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Catfis329', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Tilapi330', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Gouram331', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
+  { username: 'Oscars332', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' }
 ];
+
 
 
 const activeBots = {}; // username -> bot instance
