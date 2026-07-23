@@ -9,12 +9,11 @@ console.warn = (msg, ...args) => {
 };
 
 // ── Config ────────────────────────────────────────────────────────────────
-const HOST = 'fakepixel.me';
+const HOST = 'play.fakepixel.me';
 const VERSION = '1.8.9';
 const WARP_COMMAND = '/warp island';
 const RECONNECT_MS = 5000;
 
-// IMPORTANT: Replace the proxy "host" and "port" values with your actual SOCKS5 proxies.
 const ACCOUNTS = [
   { username: 'Mantaa707', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.1', port: 1080 } },
   { username: 'Octopi888', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.2', port: 1080 } },
@@ -90,38 +89,33 @@ function printOnce(msg) {
   }
 }
 
-// ── Bot factory with SOCKS5 Proxy ──────────────────────────────────────────
+// ── Bot factory ──────────────────────────────────────────────────────────
 function createBot(account) {
   if (account._disabled) return;
-  console.log(`🚀 Connecting ${account.username} via proxy ${account.proxy.host}:${account.proxy.port}...`);
-
+  console.log(`🚀 createBot() called — connecting as ${account.username}`);
   try {
     SocksClient.createConnection({
       proxy: {
         host: account.proxy.host,
         port: account.proxy.port,
-        type: 5 // 5 = SOCKS5, 4 = SOCKS4
+        type: 5
       },
       command: 'connect',
       destination: {
         host: HOST,
-        port: 25565 // Standard Minecraft Port
+        port: 25565
       }
     }, (err, info) => {
       if (err) {
-        console.log(`💥 [${account.username}] Proxy connection failed:`, err.message);
-        // Will retry automatically after RECONNECT_MS
-        if (!account._disabled) {
-            setTimeout(() => createBot(account), RECONNECT_MS);
-        }
-        return; 
+        console.log(`🔥 [${account.username}] Proxy error:`, err.message);
+        if (!account._disabled) setTimeout(() => createBot(account), RECONNECT_MS);
+        return;
       }
 
-      // The proxy stream is established, pass it to Mineflayer
       const bot = mineflayer.createBot({
         username: account.username,
         version: VERSION,
-        stream: info.socket, 
+        stream: info.socket,
         keepAlive: true,
         checkTimeoutInterval: 60000
       });
@@ -130,7 +124,7 @@ function createBot(account) {
 
       let alive = true;
       let registered = account._registeredOnce || false;
-      let lastKickReason = null;
+      let lastKickReason = null; // captured by 'kicked', read by 'end'
 
       // ── GUI / warp ────────────────────────────────────────────────────────
       function openTeleportGUI() {
@@ -145,8 +139,8 @@ function createBot(account) {
             try {
               await bot.clickWindow(20, 0, 1);
               console.log(`🎯 [${account.username}] Clicked teleport item.`);
-            } catch (errClick) {
-              console.log(`❌ [${account.username}] GUI click error:`, errClick.message);
+            } catch (err) {
+              console.log(`❌ [${account.username}] GUI click error:`, err.message);
             }
           }
           if (!alive) return;
@@ -163,9 +157,17 @@ function createBot(account) {
       }
 
       // ── Bot lifecycle ─────────────────────────────────────────────────────
-      bot.on('login', () => console.log(`🔌 [${account.username}] Login packet sent...`));
-      
+      bot.on('login', () => console.log(`🔌 [${account.username}] Login packet sent, connecting...`));
+      bot._client.on('error', err => console.log(`🔥 [${account.username}] Client error:`, err.message));
+
       bot.once('spawn', () => {
+        console.log(`🟢 [${account.username}] SPAWN EVENT FIRED`);
+        try {
+          bot._client.socket.setTimeout(24 * 60 * 60 * 1000);
+          bot._client.socket.setKeepAlive(true, 10000);
+        } catch (e) {
+          console.log(`⚠️ [${account.username}] socket setup failed:`, e.message);
+        }
         console.log(`✅ [${account.username}] Spawned`);
         bot.manualQuit = false;
 
@@ -199,6 +201,8 @@ function createBot(account) {
         console.log(`☠️ [${account.username}] Died while AFK.`);
       });
 
+      // Fires when the server explicitly kicks the bot — usually the most
+      // specific reason string (AFK kick, duplicate login, ban, etc.)
       bot.on('kicked', (reason, loggedIn) => {
         lastKickReason = reason;
         console.log(`⛔ [${account.username}] Kicked — reason:`, reason, `(was logged in: ${loggedIn})`);
@@ -210,18 +214,17 @@ function createBot(account) {
         alive = false;
         delete activeBots[account.username];
         lastKickReason = null;
-        
         if (bot.manualQuit) {
           console.log(`🛑 [${account.username}] Manual quit — not reconnecting.`);
           return;
         }
         if (!account._disabled) {
-          console.log(`🔁 [${account.username}] Reconnecting in ${RECONNECT_MS / 1000}s...`);
+          console.log(`🔁 [${account.username}] Disconnected unexpectedly. Reconnecting in ${RECONNECT_MS / 1000}s...`);
           setTimeout(() => createBot(account), RECONNECT_MS);
         }
       });
 
-      bot.on('error', err => console.log(`❌ [${account.username}] Bot Error:`, err.message));
+      bot.on('error', err => console.log(`❌ [${account.username}] Error:`, err.message));
 
       bot.quitBot = function () {
         bot.manualQuit = true;
@@ -267,9 +270,4 @@ process.stdin.on('data', (input) => {
 });
 
 // ── Start ─────────────────────────────────────────────────────────────────
-// Stagger the logins slightly to avoid immediately overloading the network limits
-ACCOUNTS.forEach((account, index) => {
-  setTimeout(() => {
-    createBot(account);
-  }, index * 2000); // 2-second delay between each bot spawning
-});
+ACCOUNTS.forEach(account => createBot(account));
