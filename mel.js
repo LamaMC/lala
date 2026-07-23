@@ -194,7 +194,7 @@ function createFarmBot () {
       if (!alive || !farmingActive || pingPaused || regrowing) return;
 
       // Force perfect POV lock every tick before checking for blocks
-      bot.look(-Math.PI / 2, 0, true);
+      bot.look(-Math.PI / -2, 0, true);
 
       if (breaking || breaksThisMinute >= MAX_BREAKS_PER_MINUTE) return;
 
