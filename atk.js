@@ -1,5 +1,5 @@
 const mineflayer = require('mineflayer');
-// const { SocksProxyAgent } = require('socks-proxy-agent'); // Uncomment if using SOCKS proxies
+const { SocksClient } = require('socks');
 
 const originalWarn = console.warn;
 console.warn = (msg, ...args) => {
@@ -9,62 +9,63 @@ console.warn = (msg, ...args) => {
 };
 
 // ── Config ────────────────────────────────────────────────────────────────
-const HOST = 'fakepixel.me';
+const HOST = 'play.testingbots.me';
 const VERSION = '1.8.9';
 const WARP_COMMAND = '/warp island';
 const RECONNECT_MS = 5000;
 
+// IMPORTANT: Replace the proxy "host" and "port" values with your actual SOCKS5 proxies.
 const ACCOUNTS = [
-  { username: 'Mantaa707', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.101' },
-  { username: 'Octopi888', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.102' },
-  { username: 'Sirenn303', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.103' },
-  { username: 'Kelpys101', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.104' },
-  { username: 'Walrus404', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.105' },
-  { username: 'Hydraa999', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.106' },
-  { username: 'Viperr505', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.107' },
-  { username: 'Corall606', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.108' },
-  { username: 'Pelica202', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.109' },
-  { username: 'Nautil111', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.110' },
-  { username: 'Salmon102', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.111' },
-  { username: 'Marlin103', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.112' },
-  { username: 'Shrimp104', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.113' },
-  { username: 'Urchin105', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.114' },
-  { username: 'Dugong106', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.115' },
-  { username: 'Beluga107', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.116' },
-  { username: 'Whalee108', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.117' },
-  { username: 'Mussell109', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.118' },
-  { username: 'Oyster110', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.119' },
-  { username: 'Barram112', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.120' },
-  { username: 'Gudgeo113', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.121' },
-  { username: 'Medusa114', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.122' },
-  { username: 'Polyps115', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.123' },
-  { username: 'Spongy116', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.124' },
-  { username: 'Snappe117', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.125' },
-  { username: 'Anemno118', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.126' },
-  { username: 'Angler119', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.127' },
-  { username: 'Triton120', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.128' },
-  { username: 'Abysss121', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.129' },
-  { username: 'Trench122', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.130' },
-  { username: 'Lagoon123', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.131' },
-  { username: 'Reeffs124', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.132' },
-  { username: 'Oceanic125', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.133' },
-  { username: 'Tsunami126', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.134' },
-  { username: 'Aqueus127', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.135' },
-  { username: 'Marine128', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.136' },
-  { username: 'Pelagi129', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.137' },
-  { username: 'Benths130', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.138' },
-  { username: 'Deepsea131', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.139' },
-  { username: 'Finnees132', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.140' },
-  { username: 'Gillee133', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.141' },
-  { username: 'Guppyy134', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.142' },
-  { username: 'Minnow135', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.143' },
-  { username: 'Clamm210', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.144' },
-  { username: 'Krilll211', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.145' },
-  { username: 'Orcaas212', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.146' },
-  { username: 'Limpets213', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.147' },
-  { username: 'Plankt214', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.148' },
-  { username: 'Barnac215', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.149' },
-  { username: 'Squids216', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.150' }
+  { username: 'Mantaa707', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.1', port: 1080 } },
+  { username: 'Octopi888', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.2', port: 1080 } },
+  { username: 'Sirenn303', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.3', port: 1080 } },
+  { username: 'Kelpys101', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.4', port: 1080 } },
+  { username: 'Walrus404', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.5', port: 1080 } },
+  { username: 'Hydraa999', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.6', port: 1080 } },
+  { username: 'Viperr505', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.7', port: 1080 } },
+  { username: 'Corall606', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.8', port: 1080 } },
+  { username: 'Pelica202', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.9', port: 1080 } },
+  { username: 'Nautil111', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.10', port: 1080 } },
+  { username: 'Salmon102', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.11', port: 1080 } },
+  { username: 'Marlin103', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.12', port: 1080 } },
+  { username: 'Shrimp104', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.13', port: 1080 } },
+  { username: 'Urchin105', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.14', port: 1080 } },
+  { username: 'Dugong106', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.15', port: 1080 } },
+  { username: 'Beluga107', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.16', port: 1080 } },
+  { username: 'Whalee108', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.17', port: 1080 } },
+  { username: 'Mussell109', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.18', port: 1080 } },
+  { username: 'Oyster110', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.19', port: 1080 } },
+  { username: 'Barram112', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.20', port: 1080 } },
+  { username: 'Gudgeo113', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.21', port: 1080 } },
+  { username: 'Medusa114', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.22', port: 1080 } },
+  { username: 'Polyps115', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.23', port: 1080 } },
+  { username: 'Spongy116', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.24', port: 1080 } },
+  { username: 'Snappe117', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.25', port: 1080 } },
+  { username: 'Anemno118', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.26', port: 1080 } },
+  { username: 'Angler119', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.27', port: 1080 } },
+  { username: 'Triton120', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.28', port: 1080 } },
+  { username: 'Abysss121', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.29', port: 1080 } },
+  { username: 'Trench122', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.30', port: 1080 } },
+  { username: 'Lagoon123', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.31', port: 1080 } },
+  { username: 'Reeffs124', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.32', port: 1080 } },
+  { username: 'Oceanic125', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.33', port: 1080 } },
+  { username: 'Tsunami126', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.34', port: 1080 } },
+  { username: 'Aqueus127', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.35', port: 1080 } },
+  { username: 'Marine128', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.36', port: 1080 } },
+  { username: 'Pelagi129', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.37', port: 1080 } },
+  { username: 'Benths130', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.38', port: 1080 } },
+  { username: 'Deepsea131', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.39', port: 1080 } },
+  { username: 'Finnees132', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.40', port: 1080 } },
+  { username: 'Gillee133', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.41', port: 1080 } },
+  { username: 'Guppyy134', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.42', port: 1080 } },
+  { username: 'Minnow135', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.43', port: 1080 } },
+  { username: 'Clamm210', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.44', port: 1080 } },
+  { username: 'Krilll211', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.45', port: 1080 } },
+  { username: 'Orcaas212', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.46', port: 1080 } },
+  { username: 'Limpets213', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.47', port: 1080 } },
+  { username: 'Plankt214', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.48', port: 1080 } },
+  { username: 'Barnac215', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.49', port: 1080 } },
+  { username: 'Squids216', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.50', port: 1080 } }
 ];
 
 const activeBots = {}; // username -> bot instance
@@ -89,139 +90,146 @@ function printOnce(msg) {
   }
 }
 
-// ── Bot factory ──────────────────────────────────────────────────────────
+// ── Bot factory with SOCKS5 Proxy ──────────────────────────────────────────
 function createBot(account) {
   if (account._disabled) return;
-  console.log(`🚀 createBot() called — connecting as ${account.username} from IP ${account.localAddress}`);
-  
+  console.log(`🚀 Connecting ${account.username} via proxy ${account.proxy.host}:${account.proxy.port}...`);
+
   try {
-    // If using SOCKS proxies instead of local IPs, you would configure it here:
-    // const agent = account.proxy ? new SocksProxyAgent(account.proxy) : null;
-
-    const bot = mineflayer.createBot({
-      host: HOST,
-      username: account.username,
-      version: VERSION,
-      keepAlive: true,
-      checkTimeoutInterval: 60000,
-      
-      // THIS BINDS THE BOT TO THE SPECIFIC LOCAL IP
-      localAddress: account.localAddress,
-      
-      // If using SOCKS proxy, use this instead of localAddress:
-      // agent: agent 
-    });
-
-    activeBots[account.username] = bot;
-
-    let alive = true;
-    let registered = account._registeredOnce || false;
-    let lastKickReason = null; 
-
-    // ── GUI / warp ────────────────────────────────────────────────────────
-    function openTeleportGUI() {
-      bot.setQuickBarSlot(0);
-      bot.activateItem();
-      bot.once('windowOpen', async window => {
-        if (!alive) return;
-        await new Promise(res => setTimeout(res, 1000));
-        if (!alive) return;
-        const slot = window.slots[20];
-        if (slot && slot.name !== 'air') {
-          try {
-            await bot.clickWindow(20, 0, 1);
-            console.log(`🎯 [${account.username}] Clicked teleport item.`);
-          } catch (err) {
-            console.log(`❌ [${account.username}] GUI click error:`, err.message);
-          }
-        }
-        if (!alive) return;
-        setTimeout(() => {
-          if (!alive) return;
-          bot.chat(WARP_COMMAND);
-          setTimeout(() => { if (alive) enterAfkPool(); }, 5000);
-        }, 2000);
-      });
-    }
-
-    function enterAfkPool() {
-      console.log(`💤 [${account.username}] In AFK pool — idling indefinitely, keep-alive only.`);
-    }
-
-    // ── Bot lifecycle ─────────────────────────────────────────────────────
-    bot.on('login', () => console.log(`🔌 [${account.username}] Login packet sent, connecting...`));
-    bot._client.on('error', err => console.log(`🔥 [${account.username}] Client error:`, err.message));
-
-    bot.once('spawn', () => {
-      console.log(`🟢 [${account.username}] SPAWN EVENT FIRED`);
-      try {
-        bot._client.socket.setTimeout(24 * 60 * 60 * 1000);
-        bot._client.socket.setKeepAlive(true, 10000);
-      } catch (e) {
-        console.log(`⚠️ [${account.username}] socket setup failed:`, e.message);
+    SocksClient.createConnection({
+      proxy: {
+        host: account.proxy.host,
+        port: account.proxy.port,
+        type: 5 // 5 = SOCKS5, 4 = SOCKS4
+      },
+      command: 'connect',
+      destination: {
+        host: HOST,
+        port: 25565 // Standard Minecraft Port
       }
-      console.log(`✅ [${account.username}] Spawned`);
-      bot.manualQuit = false;
+    }, (err, info) => {
+      if (err) {
+        console.log(`💥 [${account.username}] Proxy connection failed:`, err.message);
+        // Will retry automatically after RECONNECT_MS
+        if (!account._disabled) {
+            setTimeout(() => createBot(account), RECONNECT_MS);
+        }
+        return; 
+      }
 
-      setTimeout(() => {
-        if (!alive) return;
-        if (!registered) {
-          bot.chat(account.registerCommand);
-          registered = true;
-          account._registeredOnce = true;
+      // The proxy stream is established, pass it to Mineflayer
+      const bot = mineflayer.createBot({
+        username: account.username,
+        version: VERSION,
+        stream: info.socket, 
+        keepAlive: true,
+        checkTimeoutInterval: 60000
+      });
+
+      activeBots[account.username] = bot;
+
+      let alive = true;
+      let registered = account._registeredOnce || false;
+      let lastKickReason = null;
+
+      // ── GUI / warp ────────────────────────────────────────────────────────
+      function openTeleportGUI() {
+        bot.setQuickBarSlot(0);
+        bot.activateItem();
+        bot.once('windowOpen', async window => {
+          if (!alive) return;
+          await new Promise(res => setTimeout(res, 1000));
+          if (!alive) return;
+          const slot = window.slots[20];
+          if (slot && slot.name !== 'air') {
+            try {
+              await bot.clickWindow(20, 0, 1);
+              console.log(`🎯 [${account.username}] Clicked teleport item.`);
+            } catch (errClick) {
+              console.log(`❌ [${account.username}] GUI click error:`, errClick.message);
+            }
+          }
+          if (!alive) return;
           setTimeout(() => {
             if (!alive) return;
+            bot.chat(WARP_COMMAND);
+            setTimeout(() => { if (alive) enterAfkPool(); }, 5000);
+          }, 2000);
+        });
+      }
+
+      function enterAfkPool() {
+        console.log(`💤 [${account.username}] In AFK pool — idling indefinitely, keep-alive only.`);
+      }
+
+      // ── Bot lifecycle ─────────────────────────────────────────────────────
+      bot.on('login', () => console.log(`🔌 [${account.username}] Login packet sent...`));
+      
+      bot.once('spawn', () => {
+        console.log(`✅ [${account.username}] Spawned`);
+        bot.manualQuit = false;
+
+        setTimeout(() => {
+          if (!alive) return;
+          if (!registered) {
+            bot.chat(account.registerCommand);
+            registered = true;
+            account._registeredOnce = true;
+            setTimeout(() => {
+              if (!alive) return;
+              bot.chat(account.loginCommand);
+              setTimeout(() => { if (alive) openTeleportGUI(); }, 2000);
+            }, 2000);
+          } else {
             bot.chat(account.loginCommand);
             setTimeout(() => { if (alive) openTeleportGUI(); }, 2000);
-          }, 2000);
-        } else {
-          bot.chat(account.loginCommand);
-          setTimeout(() => { if (alive) openTeleportGUI(); }, 2000);
+          }
+        }, 2000);
+      });
+
+      // ── Message handler (deduped) ──────────────────────────────────────────
+      bot.on('message', (jsonMsg, position) => {
+        if (position === 'game_info') return;
+        const msg = jsonMsg.toString();
+        printOnce(msg);
+      });
+
+      bot.on('death', () => {
+        if (!alive) return;
+        console.log(`☠️ [${account.username}] Died while AFK.`);
+      });
+
+      bot.on('kicked', (reason, loggedIn) => {
+        lastKickReason = reason;
+        console.log(`⛔ [${account.username}] Kicked — reason:`, reason, `(was logged in: ${loggedIn})`);
+      });
+
+      bot.on('end', (reason) => {
+        const detail = lastKickReason || reason || 'unknown';
+        console.log(`📋 [${account.username}] Disconnected — reason:`, detail);
+        alive = false;
+        delete activeBots[account.username];
+        lastKickReason = null;
+        
+        if (bot.manualQuit) {
+          console.log(`🛑 [${account.username}] Manual quit — not reconnecting.`);
+          return;
         }
-      }, 2000);
+        if (!account._disabled) {
+          console.log(`🔁 [${account.username}] Reconnecting in ${RECONNECT_MS / 1000}s...`);
+          setTimeout(() => createBot(account), RECONNECT_MS);
+        }
+      });
+
+      bot.on('error', err => console.log(`❌ [${account.username}] Bot Error:`, err.message));
+
+      bot.quitBot = function () {
+        bot.manualQuit = true;
+        account._disabled = true;
+        alive = false;
+        bot.quit();
+      };
     });
-
-    // ── Message handler (deduped) ──────────────────────────────────────────
-    bot.on('message', (jsonMsg, position) => {
-      if (position === 'game_info') return;
-      const msg = jsonMsg.toString();
-      printOnce(msg);
-    });
-
-    bot.on('death', () => {
-      if (!alive) return;
-      console.log(`☠️ [${account.username}] Died while AFK.`);
-    });
-
-    bot.on('kicked', (reason, loggedIn) => {
-      lastKickReason = reason;
-      console.log(`⛔ [${account.username}] Kicked — reason:`, reason, `(was logged in: ${loggedIn})`);
-    });
-
-    bot.on('end', (reason) => {
-      const detail = lastKickReason || reason || 'unknown';
-      console.log(`📋 [${account.username}] Disconnected — reason:`, detail);
-      alive = false;
-      delete activeBots[account.username];
-      lastKickReason = null;
-      if (bot.manualQuit) {
-        console.log(`🛑 [${account.username}] Manual quit — not reconnecting.`);
-        return;
-      }
-      if (!account._disabled) {
-        console.log(`🔁 [${account.username}] Disconnected unexpectedly. Reconnecting in ${RECONNECT_MS / 1000}s...`);
-        setTimeout(() => createBot(account), RECONNECT_MS);
-      }
-    });
-
-    bot.on('error', err => console.log(`❌ [${account.username}] Error:`, err.message));
-
-    bot.quitBot = function () {
-      bot.manualQuit = true;
-      account._disabled = true;
-      alive = false;
-      bot.quit();
-    };
   } catch (err) {
     console.log(`💥 [${account.username}] createBot crashed:`, err);
   }
@@ -259,7 +267,7 @@ process.stdin.on('data', (input) => {
 });
 
 // ── Start ─────────────────────────────────────────────────────────────────
-// Stagger the logins slightly to avoid immediately overloading the IP/Server limits
+// Stagger the logins slightly to avoid immediately overloading the network limits
 ACCOUNTS.forEach((account, index) => {
   setTimeout(() => {
     createBot(account);
