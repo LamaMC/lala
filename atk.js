@@ -16,7 +16,7 @@ const RECONNECT_MS = 5000;
 
 // You can mix and match 'type: 5' (SOCKS5) or 'type: 4' (SOCKS4) per proxy
 const ACCOUNTS = [
-  { username: 'Mantaa707', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '140.82.62.31', port: 50000, type: 5 } },
+  { username: 'Mantaa707', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '103.11.76.74', port: 1081, type: 5 } },
   { username: 'Octopi888', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.2', port: 1080, type: 5 } },
   { username: 'Sirenn303', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.3', port: 1080, type: 4 } },
   { username: 'Kelpys101', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.4', port: 1080, type: 4 } },
