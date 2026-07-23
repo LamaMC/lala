@@ -14,6 +14,7 @@ const VERSION = '1.8.9';
 const WARP_COMMAND = '/warp island';
 const RECONNECT_MS = 5000;
 
+// Replaced with the first 10 ocean bots and updated passwords to 1122
 const ACCOUNTS = [
   { username: 'Mantaa707', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.1', port: 1080 } },
   { username: 'Octopi888', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.2', port: 1080 } },
@@ -24,47 +25,7 @@ const ACCOUNTS = [
   { username: 'Viperr505', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.7', port: 1080 } },
   { username: 'Corall606', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.8', port: 1080 } },
   { username: 'Pelica202', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.9', port: 1080 } },
-  { username: 'Nautil111', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.10', port: 1080 } },
-  { username: 'Salmon102', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.11', port: 1080 } },
-  { username: 'Marlin103', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.12', port: 1080 } },
-  { username: 'Shrimp104', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.13', port: 1080 } },
-  { username: 'Urchin105', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.14', port: 1080 } },
-  { username: 'Dugong106', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.15', port: 1080 } },
-  { username: 'Beluga107', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.16', port: 1080 } },
-  { username: 'Whalee108', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.17', port: 1080 } },
-  { username: 'Mussell109', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.18', port: 1080 } },
-  { username: 'Oyster110', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.19', port: 1080 } },
-  { username: 'Barram112', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.20', port: 1080 } },
-  { username: 'Gudgeo113', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.21', port: 1080 } },
-  { username: 'Medusa114', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.22', port: 1080 } },
-  { username: 'Polyps115', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.23', port: 1080 } },
-  { username: 'Spongy116', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.24', port: 1080 } },
-  { username: 'Snappe117', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.25', port: 1080 } },
-  { username: 'Anemno118', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.26', port: 1080 } },
-  { username: 'Angler119', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.27', port: 1080 } },
-  { username: 'Triton120', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.28', port: 1080 } },
-  { username: 'Abysss121', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.29', port: 1080 } },
-  { username: 'Trench122', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.30', port: 1080 } },
-  { username: 'Lagoon123', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.31', port: 1080 } },
-  { username: 'Reeffs124', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.32', port: 1080 } },
-  { username: 'Oceanic125', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.33', port: 1080 } },
-  { username: 'Tsunami126', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.34', port: 1080 } },
-  { username: 'Aqueus127', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.35', port: 1080 } },
-  { username: 'Marine128', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.36', port: 1080 } },
-  { username: 'Pelagi129', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.37', port: 1080 } },
-  { username: 'Benths130', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.38', port: 1080 } },
-  { username: 'Deepsea131', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.39', port: 1080 } },
-  { username: 'Finnees132', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.40', port: 1080 } },
-  { username: 'Gillee133', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.41', port: 1080 } },
-  { username: 'Guppyy134', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.42', port: 1080 } },
-  { username: 'Minnow135', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.43', port: 1080 } },
-  { username: 'Clamm210', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.44', port: 1080 } },
-  { username: 'Krilll211', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.45', port: 1080 } },
-  { username: 'Orcaas212', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.46', port: 1080 } },
-  { username: 'Limpets213', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.47', port: 1080 } },
-  { username: 'Plankt214', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.48', port: 1080 } },
-  { username: 'Barnac215', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.49', port: 1080 } },
-  { username: 'Squids216', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.50', port: 1080 } }
+  { username: 'Nautil111', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.10', port: 1080 } }
 ];
 
 const activeBots = {}; // username -> bot instance
@@ -98,12 +59,12 @@ function createBot(account) {
       proxy: {
         host: account.proxy.host,
         port: account.proxy.port,
-        type: 5
+        type: 5 // SOCKS5
       },
       command: 'connect',
       destination: {
         host: HOST,
-        port: 25565
+        port: 25565 // Default Minecraft port
       }
     }, (err, info) => {
       if (err) {
@@ -115,7 +76,7 @@ function createBot(account) {
       const bot = mineflayer.createBot({
         username: account.username,
         version: VERSION,
-        stream: info.socket,
+        stream: info.socket, 
         keepAlive: true,
         checkTimeoutInterval: 60000
       });
@@ -201,8 +162,6 @@ function createBot(account) {
         console.log(`☠️ [${account.username}] Died while AFK.`);
       });
 
-      // Fires when the server explicitly kicks the bot — usually the most
-      // specific reason string (AFK kick, duplicate login, ban, etc.)
       bot.on('kicked', (reason, loggedIn) => {
         lastKickReason = reason;
         console.log(`⛔ [${account.username}] Kicked — reason:`, reason, `(was logged in: ${loggedIn})`);
@@ -270,4 +229,9 @@ process.stdin.on('data', (input) => {
 });
 
 // ── Start ─────────────────────────────────────────────────────────────────
-ACCOUNTS.forEach(account => createBot(account));
+// Joining interval set to 400ms
+ACCOUNTS.forEach((account, index) => {
+  setTimeout(() => {
+    createBot(account);
+  }, index * 400); 
+});
