@@ -16,7 +16,7 @@ const RECONNECT_MS = 5000;
 
 // Replaced with the first 10 ocean bots and updated passwords to 1122
 const ACCOUNTS = [
-  { username: 'Mantaa707', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.1', port: 1080 } },
+  { username: 'Mantaa707', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '3.129.27.9', port: 17000 } },
   { username: 'Octopi888', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.2', port: 1080 } },
   { username: 'Sirenn303', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.3', port: 1080 } },
   { username: 'Kelpys101', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.4', port: 1080 } },
