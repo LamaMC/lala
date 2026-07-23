@@ -1,4 +1,5 @@
 const mineflayer = require('mineflayer');
+// const { SocksProxyAgent } = require('socks-proxy-agent'); // Uncomment if using SOCKS proxies
 
 const originalWarn = console.warn;
 console.warn = (msg, ...args) => {
@@ -14,58 +15,57 @@ const WARP_COMMAND = '/warp island';
 const RECONNECT_MS = 5000;
 
 const ACCOUNTS = [
-  { username: 'Mantaa707', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Octopi888', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Sirenn303', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Kelpys101', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Walrus404', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Hydraa999', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Viperr505', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Corall606', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Pelica202', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Nautil111', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Salmon102', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Marlin103', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Shrimp104', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Urchin105', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Dugong106', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Beluga107', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Whalee108', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Mussell109', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Oyster110', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Barram112', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Gudgeo113', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Medusa114', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Polyps115', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Spongy116', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Snappe117', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Anemno118', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Angler119', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Triton120', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Abysss121', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Trench122', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Lagoon123', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Reeffs124', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Oceanic125', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Tsunami126', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Aqueus127', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Marine128', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Pelagi129', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Benths130', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Deepsea131', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Finnees132', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Gillee133', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Guppyy134', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Minnow135', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Clamm210', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Krilll211', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Orcaas212', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Limpets213', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Plankt214', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Barnac215', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Squids216', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' }
+  { username: 'Mantaa707', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.101' },
+  { username: 'Octopi888', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.102' },
+  { username: 'Sirenn303', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.103' },
+  { username: 'Kelpys101', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.104' },
+  { username: 'Walrus404', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.105' },
+  { username: 'Hydraa999', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.106' },
+  { username: 'Viperr505', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.107' },
+  { username: 'Corall606', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.108' },
+  { username: 'Pelica202', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.109' },
+  { username: 'Nautil111', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.110' },
+  { username: 'Salmon102', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.111' },
+  { username: 'Marlin103', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.112' },
+  { username: 'Shrimp104', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.113' },
+  { username: 'Urchin105', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.114' },
+  { username: 'Dugong106', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.115' },
+  { username: 'Beluga107', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.116' },
+  { username: 'Whalee108', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.117' },
+  { username: 'Mussell109', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.118' },
+  { username: 'Oyster110', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.119' },
+  { username: 'Barram112', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.120' },
+  { username: 'Gudgeo113', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.121' },
+  { username: 'Medusa114', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.122' },
+  { username: 'Polyps115', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.123' },
+  { username: 'Spongy116', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.124' },
+  { username: 'Snappe117', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.125' },
+  { username: 'Anemno118', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.126' },
+  { username: 'Angler119', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.127' },
+  { username: 'Triton120', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.128' },
+  { username: 'Abysss121', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.129' },
+  { username: 'Trench122', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.130' },
+  { username: 'Lagoon123', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.131' },
+  { username: 'Reeffs124', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.132' },
+  { username: 'Oceanic125', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.133' },
+  { username: 'Tsunami126', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.134' },
+  { username: 'Aqueus127', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.135' },
+  { username: 'Marine128', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.136' },
+  { username: 'Pelagi129', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.137' },
+  { username: 'Benths130', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.138' },
+  { username: 'Deepsea131', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.139' },
+  { username: 'Finnees132', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.140' },
+  { username: 'Gillee133', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.141' },
+  { username: 'Guppyy134', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.142' },
+  { username: 'Minnow135', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.143' },
+  { username: 'Clamm210', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.144' },
+  { username: 'Krilll211', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.145' },
+  { username: 'Orcaas212', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.146' },
+  { username: 'Limpets213', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.147' },
+  { username: 'Plankt214', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.148' },
+  { username: 'Barnac215', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.149' },
+  { username: 'Squids216', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', localAddress: '192.168.1.150' }
 ];
-
 
 const activeBots = {}; // username -> bot instance
 
@@ -92,21 +92,31 @@ function printOnce(msg) {
 // ── Bot factory ──────────────────────────────────────────────────────────
 function createBot(account) {
   if (account._disabled) return;
-  console.log(`🚀 createBot() called — connecting as ${account.username}`);
+  console.log(`🚀 createBot() called — connecting as ${account.username} from IP ${account.localAddress}`);
+  
   try {
+    // If using SOCKS proxies instead of local IPs, you would configure it here:
+    // const agent = account.proxy ? new SocksProxyAgent(account.proxy) : null;
+
     const bot = mineflayer.createBot({
       host: HOST,
       username: account.username,
       version: VERSION,
       keepAlive: true,
-      checkTimeoutInterval: 60000
+      checkTimeoutInterval: 60000,
+      
+      // THIS BINDS THE BOT TO THE SPECIFIC LOCAL IP
+      localAddress: account.localAddress,
+      
+      // If using SOCKS proxy, use this instead of localAddress:
+      // agent: agent 
     });
 
     activeBots[account.username] = bot;
 
     let alive = true;
     let registered = account._registeredOnce || false;
-    let lastKickReason = null; // captured by 'kicked', read by 'end'
+    let lastKickReason = null; 
 
     // ── GUI / warp ────────────────────────────────────────────────────────
     function openTeleportGUI() {
@@ -183,8 +193,6 @@ function createBot(account) {
       console.log(`☠️ [${account.username}] Died while AFK.`);
     });
 
-    // Fires when the server explicitly kicks the bot — usually the most
-    // specific reason string (AFK kick, duplicate login, ban, etc.)
     bot.on('kicked', (reason, loggedIn) => {
       lastKickReason = reason;
       console.log(`⛔ [${account.username}] Kicked — reason:`, reason, `(was logged in: ${loggedIn})`);
@@ -251,4 +259,9 @@ process.stdin.on('data', (input) => {
 });
 
 // ── Start ─────────────────────────────────────────────────────────────────
-ACCOUNTS.forEach(account => createBot(account));
+// Stagger the logins slightly to avoid immediately overloading the IP/Server limits
+ACCOUNTS.forEach((account, index) => {
+  setTimeout(() => {
+    createBot(account);
+  }, index * 2000); // 2-second delay between each bot spawning
+});
