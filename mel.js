@@ -173,6 +173,10 @@ function createFarmBot () {
     let breaking       = false;
 
     // ── Clicking ──────────────────────────────────────────────────────────────
+        // Add this near your recentlyDug Set
+    const loggedBlocks = new Set();
+
+    // ── Clicking ──────────────────────────────────────────────────────────────
     function startClicking() {
       bot.on('physicsTick', onTick);
     }
@@ -203,14 +207,32 @@ function createFarmBot () {
 
       for (const { dx, dy, dz } of melonOffsets) {
         const block = bot.blockAt(pos.offset(dx, dy, dz));
-        if (!block || block.name !== 'melon_block') continue;
+        if (!block) continue;
+        
         const key = `${block.position.x},${block.position.y},${block.position.z}`;
+
+        // 1. Detect and send (log) what block is actually there before doing anything
+        if (!loggedBlocks.has(key)) {
+          console.log(`👀 Detected: '${block.name}' at (${dx}, ${dy}, ${dz})`);
+          loggedBlocks.add(key);
+          
+          // Clear it from the log cache after 2 seconds to prevent console spam
+          setTimeout(() => loggedBlocks.delete(key), 2000); 
+        }
+
+        // 2. If it is NOT a melon_block, skip to the next offset
+        // (If the server uses 'melon' instead of 'melon_block', you will see it in the logs above!)
+        if (block.name !== 'melon_block') continue;
+        
         if (recentlyDug.has(key)) continue;
 
+        // 3. We got what we wanted — initiate the nuke
         recentlyDug.add(key);
         setTimeout(() => recentlyDug.delete(key), DIG_COOLDOWN_MS);
         breaksThisMinute++;
         breaking = true;
+
+        console.log(`💥 Nuking ${block.name} at ${key}!`);
 
         bot.dig(block)
           .catch(err => console.log('⚠️ dig failed:', err.message))
@@ -219,6 +241,7 @@ function createFarmBot () {
         return; 
       }
     }
+
 
     // ── GUI / warp ────────────────────────────────────────────────────────────
     function openTeleportGUI () {
