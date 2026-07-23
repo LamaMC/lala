@@ -200,9 +200,9 @@ function createFarmBot () {
 
       const pos = bot.entity.position.floored();
       const melonOffsets = [
-        { dx: 1, dy: 0, dz: 0 },
-        { dx: -3, dy: -1, dz: 0 },
-        { dx: -4, dy: -1, dz: 0 }
+        { dx: 1, dy: 1, dz: 0 },
+        { dx: -3, dy: 0, dz: 0 },
+        { dx: -4, dy: 0, dz: 0 }
       ];
 
       for (const { dx, dy, dz } of melonOffsets) {
