@@ -9,7 +9,7 @@ console.warn = (msg, ...args) => {
 };
 
 // ── Config ────────────────────────────────────────────────────────────────
-const HOST = 'play.testingbots.me';
+const HOST = 'fakepixel.me';
 const VERSION = '1.8.9';
 const WARP_COMMAND = '/warp island';
 const RECONNECT_MS = 5000;
