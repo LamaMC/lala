@@ -11,10 +11,9 @@ console.warn = (msg, ...args) => {
 const HOST = 'fakepixel.me';
 const VERSION = '1.8.9';
 const WARP_COMMAND = '/warp island';
-const RECONNECT_MS = 5000; // was 10000
+const RECONNECT_MS = 5000;
 
 const ACCOUNTS = [
-  // --- Original 10 ---
   { username: 'Mantaa707', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
   { username: 'Octopi888', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
   { username: 'Sirenn303', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
@@ -25,8 +24,6 @@ const ACCOUNTS = [
   { username: 'Corall606', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
   { username: 'Pelica202', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
   { username: 'Nautil111', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-
-  // --- Additional 90 (Total 100) ---
   { username: 'Salmon102', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
   { username: 'Marlin103', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
   { username: 'Shrimp104', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
@@ -37,7 +34,6 @@ const ACCOUNTS = [
   { username: 'Mussell109', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
   { username: 'Oyster110', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
   { username: 'Barram112', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-
   { username: 'Gudgeo113', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
   { username: 'Medusa114', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
   { username: 'Polyps115', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
@@ -48,7 +44,6 @@ const ACCOUNTS = [
   { username: 'Triton120', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
   { username: 'Abysss121', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
   { username: 'Trench122', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-
   { username: 'Lagoon123', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
   { username: 'Reeffs124', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
   { username: 'Oceanic125', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
@@ -59,7 +54,6 @@ const ACCOUNTS = [
   { username: 'Benths130', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
   { username: 'Deepsea131', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
   { username: 'Finnees132', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-
   { username: 'Gillee133', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
   { username: 'Guppyy134', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
   { username: 'Minnow135', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
@@ -69,83 +63,24 @@ const ACCOUNTS = [
   { username: 'Limpets213', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
   { username: 'Plankt214', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
   { username: 'Barnac215', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Squids216', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-
-  { username: 'Crabby217', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Lobste218', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Prawns219', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Hermit220', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Turtle221', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Otterr222', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Corals223', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Gorgon224', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Brittle225', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Seaurs226', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-
-  { username: 'Cucumb227', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Chiton228', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Abalon229', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Conchs230', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Cowrie231', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Nudibr232', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Whelks233', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Scallo234', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Cuttle235', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Fangto301', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-
-  { username: 'Gulper302', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Blobsf304', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Dragon305', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Hatche306', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Lanter307', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Flashl308', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Anomal309', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Trilob310', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Ammoni311', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Euryp3312', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-
-  { username: 'Dunkle313', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Megalo314', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Plesio315', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Mosasa316', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Ichthy317', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Xiphan318', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Tarpon319', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Bonefi320', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Permit321', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Redfis322', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-
-  { username: 'Halibu323', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Flound324', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Turbot325', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Haddock326', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Polloc327', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Whitin328', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Catfis329', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Tilapi330', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Gouram331', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' },
-  { username: 'Oscars332', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' }
+  { username: 'Squids216', registerCommand: '/register 1122 1122', loginCommand: '/login 1122' }
 ];
-
 
 
 const activeBots = {}; // username -> bot instance
 
 // ── Duplicate-message filter ───────────────────────────────────────────
-// If two bots receive the identical chat line within this window, only
-// print it once instead of once per bot.
 const DEDUPE_WINDOW_MS = 1000;
-const recentMessages = new Map(); // msg text -> timestamp last printed
+const recentMessages = new Map();
 
 function printOnce(msg) {
   const now = Date.now();
   const last = recentMessages.get(msg);
   if (last && now - last < DEDUPE_WINDOW_MS) {
-    return; // duplicate within window, skip
+    return;
   }
   recentMessages.set(msg, now);
   console.log(`💬 ${msg}`);
-  // periodic cleanup so the map doesn't grow forever
   if (recentMessages.size > 200) {
     const cutoff = now - DEDUPE_WINDOW_MS;
     for (const [k, t] of recentMessages) {
@@ -171,6 +106,7 @@ function createBot(account) {
 
     let alive = true;
     let registered = account._registeredOnce || false;
+    let lastKickReason = null; // captured by 'kicked', read by 'end'
 
     // ── GUI / warp ────────────────────────────────────────────────────────
     function openTeleportGUI() {
@@ -235,7 +171,7 @@ function createBot(account) {
       }, 2000);
     });
 
-    // ── Message handler (deduped, no ping detection) ──────────────────────
+    // ── Message handler (deduped) ──────────────────────────────────────────
     bot.on('message', (jsonMsg, position) => {
       if (position === 'game_info') return;
       const msg = jsonMsg.toString();
@@ -247,10 +183,19 @@ function createBot(account) {
       console.log(`☠️ [${account.username}] Died while AFK.`);
     });
 
+    // Fires when the server explicitly kicks the bot — usually the most
+    // specific reason string (AFK kick, duplicate login, ban, etc.)
+    bot.on('kicked', (reason, loggedIn) => {
+      lastKickReason = reason;
+      console.log(`⛔ [${account.username}] Kicked — reason:`, reason, `(was logged in: ${loggedIn})`);
+    });
+
     bot.on('end', (reason) => {
-      console.log(`📋 [${account.username}] End reason:`, reason);
+      const detail = lastKickReason || reason || 'unknown';
+      console.log(`📋 [${account.username}] Disconnected — reason:`, detail);
       alive = false;
       delete activeBots[account.username];
+      lastKickReason = null;
       if (bot.manualQuit) {
         console.log(`🛑 [${account.username}] Manual quit — not reconnecting.`);
         return;
