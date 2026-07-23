@@ -14,18 +14,18 @@ const VERSION = '1.8.9';
 const WARP_COMMAND = '/warp island';
 const RECONNECT_MS = 5000;
 
-// Replaced with the first 10 ocean bots and updated passwords to 1122
+// You can mix and match 'type: 5' (SOCKS5) or 'type: 4' (SOCKS4) per proxy
 const ACCOUNTS = [
-  { username: 'Mantaa707', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '144.24.111.128', port: 1088 } },
-  { username: 'Octopi888', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.2', port: 1080 } },
-  { username: 'Sirenn303', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.3', port: 1080 } },
-  { username: 'Kelpys101', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.4', port: 1080 } },
-  { username: 'Walrus404', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.5', port: 1080 } },
-  { username: 'Hydraa999', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.6', port: 1080 } },
-  { username: 'Viperr505', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.7', port: 1080 } },
-  { username: 'Corall606', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.8', port: 1080 } },
-  { username: 'Pelica202', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.9', port: 1080 } },
-  { username: 'Nautil111', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.10', port: 1080 } }
+  { username: 'Mantaa707', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '140.82.62.31', port: 50000, type: 5 } },
+  { username: 'Octopi888', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.2', port: 1080, type: 5 } },
+  { username: 'Sirenn303', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.3', port: 1080, type: 4 } },
+  { username: 'Kelpys101', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.4', port: 1080, type: 4 } },
+  { username: 'Walrus404', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.5', port: 1080, type: 5 } },
+  { username: 'Hydraa999', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.6', port: 1080, type: 5 } },
+  { username: 'Viperr505', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.7', port: 1080, type: 4 } },
+  { username: 'Corall606', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.8', port: 1080, type: 4 } },
+  { username: 'Pelica202', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.9', port: 1080, type: 5 } },
+  { username: 'Nautil111', registerCommand: '/register 1122 1122', loginCommand: '/login 1122', proxy: { host: '10.0.0.10', port: 1080, type: 5 } }
 ];
 
 const activeBots = {}; // username -> bot instance
@@ -59,7 +59,7 @@ function createBot(account) {
       proxy: {
         host: account.proxy.host,
         port: account.proxy.port,
-        type: 5 // SOCKS5
+        type: account.proxy.type // Dynamically reads 4 or 5 from the account config
       },
       command: 'connect',
       destination: {
@@ -229,7 +229,6 @@ process.stdin.on('data', (input) => {
 });
 
 // ── Start ─────────────────────────────────────────────────────────────────
-// Joining interval set to 400ms
 ACCOUNTS.forEach((account, index) => {
   setTimeout(() => {
     createBot(account);
