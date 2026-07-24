@@ -174,52 +174,54 @@ function createFarmBot () {
 
         // ── Clicking ──────────────────────────────────────────────────────────────
     function startClicking() {
-      bot.on('physicsTick', onTick);
-    }
+  bot.on('physicsTick', onTick);
+}
 
-    function stopClicking() {
-      bot.removeListener('physicsTick', onTick);
-    }
+function stopClicking() {
+  bot.removeListener('physicsTick', onTick);
+}
 
-    bot.on('chat', (username, message) => {
-      if (message === '!start') startClicking();
-      if (message === '!stop') stopClicking();
-    });
+bot.on('chat', (username, message) => {
+  if (message === '!start') startClicking();
+  if (message === '!stop') stopClicking();
+});
 
-    function onTick () {
-      if (!alive || !farmingActive || pingPaused || regrowing) return;
+function onTick () {
+  if (!alive || !farmingActive || pingPaused || regrowing) return;
 
-      // Force perfect POV lock every tick before checking for blocks
-      bot.look(-Math.PI / 2, 0, true);
+  // Force perfect POV lock every tick before checking for blocks.
+  // West (-X) is 90 yaw, looking slightly down is 28 pitch.
+  bot.look((90 * Math.PI) / 180, (28 * Math.PI) / 180, true);
 
-      if (breaking || breaksThisMinute >= MAX_BREAKS_PER_MINUTE) return;
+  if (breaking || breaksThisMinute >= MAX_BREAKS_PER_MINUTE) return;
 
-      const pos = bot.entity.position.floored();
-      const melonOffsets = [
-        { dx: -1, dy: 1, dz: 0 },
-        { dx: -3, dy: 0, dz: 0 },
-        { dx: -4, dy: 0, dz: 0 }
-      ];
+  const pos = bot.entity.position.floored();
+  const melonOffsets = [
+    { dx: -1, dy: 1, dz: 0 },
+    { dx: -3, dy: 0, dz: 0 },
+    { dx: -4, dy: 0, dz: 0 }
+  ];
 
-      for (const { dx, dy, dz } of melonOffsets) {
-        const block = bot.blockAt(pos.offset(dx, dy, dz));
-        if (!block || block.name !== 'melon_block') continue;
-        
-        const key = `${block.position.x},${block.position.y},${block.position.z}`;
-        if (recentlyDug.has(key)) continue;
+  for (const { dx, dy, dz } of melonOffsets) {
+    const block = bot.blockAt(pos.offset(dx, dy, dz));
+    if (!block || block.name !== 'melon_block') continue;
+    
+    const key = `${block.position.x},${block.position.y},${block.position.z}`;
+    if (recentlyDug.has(key)) continue;
 
-        recentlyDug.add(key);
-        setTimeout(() => recentlyDug.delete(key), DIG_COOLDOWN_MS);
-        breaksThisMinute++;
-        breaking = true;
+    recentlyDug.add(key);
+    setTimeout(() => recentlyDug.delete(key), DIG_COOLDOWN_MS);
+    breaksThisMinute++;
+    breaking = true;
 
-        bot.dig(block)
-          .catch(err => console.log('⚠️ dig failed:', err.message))
-          .finally(() => { breaking = false; });
+    bot.dig(block)
+      .catch(err => console.log('⚠️ dig failed:', err.message))
+      .finally(() => { breaking = false; });
 
-        return; 
-      }
-    }
+    return; 
+  }
+}
+
 
     // ── GUI / warp ────────────────────────────────────────────────────────────
     function openTeleportGUI () {
