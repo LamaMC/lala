@@ -191,7 +191,7 @@ function onTick () {
 
   // Force perfect POV lock every tick before checking for blocks.
   // West (-X) is 90 yaw, 0 pitch means looking straight ahead horizontally.
-  bot.look((90 * Math.PI) / 180, 0, true);
+  bot.look((90 * Math.PI) / 180, 28, true);
 
   if (breaking || breaksThisMinute >= MAX_BREAKS_PER_MINUTE) return;
 
