@@ -203,7 +203,7 @@ function onTick () {
   for (const { dx, dy, dz } of melonOffsets) {
     const block = bot.blockAt(pos.offset(dx, dy, dz));
     if (!block || block.name !== 'melon_block') continue;
-    
+
     const key = `${block.position.x},${block.position.y},${block.position.z}`;
     if (recentlyDug.has(key)) continue;
 
@@ -212,12 +212,12 @@ function onTick () {
     breaksThisMinute++;
     breaking = true;
 
-    // The 'false' argument prevents the bot from snapping its head to the melon
-    bot.dig(block, false)
+    // 'ignore' keeps the head fixed on whatever bot.look() last set — no turning at all
+    bot.dig(block, 'ignore')
       .catch(err => console.log('⚠️ dig failed:', err.message))
       .finally(() => { breaking = false; });
 
-    return; 
+    return;
   }
 }
 
