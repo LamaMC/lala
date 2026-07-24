@@ -176,6 +176,7 @@ function createFarmBot () {
     let recentlyDug    = new Set();
     let breaksThisMinute = 0;
     let breaking       = false;
+    let lastDropTime   = 0;
 
         // ── Clicking ──────────────────────────────────────────────────────────────
     function startClicking() {
@@ -314,12 +315,24 @@ function onTick () {
             return;
           }
 
-          if (dropY >= 2.5 && dropY <= 6) {
-            lastPos = pos.clone();
-            movingRight = !movingRight;
-            const dir = movingRight ? 'right' : 'left';
-            console.log(`⬇️ Dropped ${dropY.toFixed(1)} blocks — switching to ${dir}`);
-            setMoveDirection(dir);
+                    if (dropY >= 2 && dropY <= 5) {
+            const now = Date.now();
+            
+            // Check if 10,000 milliseconds (10 seconds) have passed
+            if (now - lastDropTime >= 10000) {
+              lastDropTime = now; // Update the timestamp
+              movingRight = !movingRight;
+              const dir = movingRight ? 'right' : 'left';
+              console.log(`⬇️ Dropped ${dropY.toFixed(1)} blocks — switching to ${dir}`);
+              setMoveDirection(dir);
+            } else {
+              console.log(`⏳ Drop detected but ignored (on 10s cooldown).`);
+            }
+            
+            // We always update lastPos here so the bot doesn't keep 
+            // detecting the exact same drop on the next 200ms tick.
+            lastPos = pos.clone(); 
+            
           } else if (Math.abs(dropY) < 0.5) {
             lastPos = pos.clone();
           }
