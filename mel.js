@@ -191,7 +191,7 @@ function onTick () {
 
   // Force perfect POV lock every tick before checking for blocks.
   // West (-X) is 90 yaw, looking slightly down is 28 pitch.
-  bot.look((90 * Math.PI) / 180, (28 * Math.PI) / 180, true);
+  bot.look((90 * Math.PI) / 180, (0 * Math.PI) / 180, true);
 
   if (breaking || breaksThisMinute >= MAX_BREAKS_PER_MINUTE) return;
 
