@@ -143,7 +143,7 @@ const PING_AFK_MS        = 5 * 60 * 1000;
 
 const SHIFT_DETECT_MIN = 250;
 const SHIFT_DETECT_MAX = 512;
-const DIG_COOLDOWN_MS = 55;
+const DIG_COOLDOWN_MS = 100;
 const MAX_BREAKS_PER_MINUTE = 1200;
 const CHAT_FILTERS = [
   "UNCOMMON DROP! Dicer dropped",
@@ -202,11 +202,24 @@ function onTick () {
 
   if (breaking || breaksThisMinute >= MAX_BREAKS_PER_MINUTE) return;
 
-  const pos = bot.entity.position.floored();
+    const pos = bot.entity.position.floored();
+  
+  // Expanded array to catch blocks before you walk past them at high speeds
   const melonOffsets = [
+    // Standard column
     { dx: -1, dy: 1, dz: 0 },
     { dx: -3, dy: 0, dz: 0 },
-    { dx: -3.5, dy: 0, dz: 0 }
+    { dx: -4, dy: 0, dz: 0 },
+    
+    // Look-ahead/Look-behind column 1
+    { dx: -1, dy: 1, dz: 1 },
+    { dx: -3, dy: 0, dz: 1 },
+    { dx: -4, dy: 0, dz: 1 },
+
+    // Look-ahead/Look-behind column 2
+    { dx: -1, dy: 1, dz: -1 },
+    { dx: -3, dy: 0, dz: -1 },
+    { dx: -4, dy: 0, dz: -1 }
   ];
 
   for (const { dx, dy, dz } of melonOffsets) {
