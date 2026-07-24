@@ -141,10 +141,10 @@ const FARM_DURATION_MS   = 30 * 60 * 1000;
 const REGROW_DURATION_MS = 5 * 60 * 1000; 
 const PING_AFK_MS        = 5 * 60 * 1000; 
 
-const SHIFT_DETECT_MIN = 4;
+const SHIFT_DETECT_MIN = 6;
 const SHIFT_DETECT_MAX = 256;
-const DIG_COOLDOWN_MS = 300;
-const MAX_BREAKS_PER_MINUTE = 1300;
+const DIG_COOLDOWN_MS = 240;
+const MAX_BREAKS_PER_MINUTE = 1200;
 
 let scriptEnabled = true;
 
