@@ -283,14 +283,6 @@ function onTick () {
         triggerRegrow('30-minute farm timer');
       }, FARM_DURATION_MS);
 
-      const nudgeInterval = setInterval(() => {
-        if (!alive || !farmingActive) { clearInterval(nudgeInterval); return; }
-        if (pingPaused || regrowing) return;
-        bot.look(-Math.PI / 2, 0, true);
-        bot.setControlState('forward', true);
-        setTimeout(() => bot.setControlState('forward', false), 100);
-      }, 10000);
-
       const breakCounterInterval = setInterval(() => {
         if (!alive || !farmingActive) { clearInterval(breakCounterInterval); return; }
         breaksThisMinute = 0;
