@@ -212,7 +212,8 @@ function onTick () {
     breaksThisMinute++;
     breaking = true;
 
-    bot.dig(block)
+    // The 'false' argument prevents the bot from snapping its head to the melon
+    bot.dig(block, false)
       .catch(err => console.log('⚠️ dig failed:', err.message))
       .finally(() => { breaking = false; });
 
