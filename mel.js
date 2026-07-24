@@ -187,8 +187,8 @@ function stopClicking() {
 }
 
 bot.on('chat', (username, message) => {
-  if (message === '!start') startFarming();
-  if (message === '!stop') stopFarming();
+  if (message === '!start') startClicling();
+  if (message === '!stop') stopClicking();
 });
 
 
