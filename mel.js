@@ -143,7 +143,7 @@ const PING_AFK_MS        = 5 * 60 * 1000;
 
 const SHIFT_DETECT_MIN = 250;
 const SHIFT_DETECT_MAX = 512;
-const DIG_COOLDOWN_MS = 100;
+const DIG_COOLDOWN_MS = 51;
 const MAX_BREAKS_PER_MINUTE = 1200;
 const CHAT_FILTERS = [
   "UNCOMMON DROP! Dicer dropped",
