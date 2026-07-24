@@ -174,8 +174,6 @@ function createFarmBot () {
 
         // ── Clicking ──────────────────────────────────────────────────────────────
     function startClicking() {
-  // Look straight ahead horizontally (West / -X) once when starting
-  bot.look((90 * Math.PI) / 180, 0, true);
   bot.on('physicsTick', onTick);
 }
 
@@ -191,6 +189,10 @@ bot.on('chat', (username, message) => {
 function onTick () {
   if (!alive || !farmingActive || pingPaused || regrowing) return;
 
+  // Force perfect POV lock every tick before checking for blocks.
+  // West (-X) is 90 yaw, looking slightly down is 28 pitch.
+  bot.look((90 * Math.PI) / 180, (28 * Math.PI) / 180, true);
+
   if (breaking || breaksThisMinute >= MAX_BREAKS_PER_MINUTE) return;
 
   const pos = bot.entity.position.floored();
@@ -203,7 +205,7 @@ function onTick () {
   for (const { dx, dy, dz } of melonOffsets) {
     const block = bot.blockAt(pos.offset(dx, dy, dz));
     if (!block || block.name !== 'melon_block') continue;
-
+    
     const key = `${block.position.x},${block.position.y},${block.position.z}`;
     if (recentlyDug.has(key)) continue;
 
@@ -212,12 +214,11 @@ function onTick () {
     breaksThisMinute++;
     breaking = true;
 
-    // 'ignore' keeps the head fixed on whatever bot.look() last set — no turning at all
-    bot.dig(block, 'ignore')
+    bot.dig(block)
       .catch(err => console.log('⚠️ dig failed:', err.message))
       .finally(() => { breaking = false; });
 
-    return;
+    return; 
   }
 }
     
