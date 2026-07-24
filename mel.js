@@ -220,7 +220,7 @@ function onTick () {
     return;
   }
 }
-
+    
     // ── GUI / warp ────────────────────────────────────────────────────────────
     function openTeleportGUI () {
       bot.setQuickBarSlot(0);
