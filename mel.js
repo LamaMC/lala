@@ -145,6 +145,10 @@ const SHIFT_DETECT_MIN = 500;
 const SHIFT_DETECT_MAX = 512;
 const DIG_COOLDOWN_MS = 240;
 const MAX_BREAKS_PER_MINUTE = 1200;
+const CHAT_FILTERS = [
+  "UNCOMMON DROP! Dicer dropped",
+  "RARE DROP! Dicer dropped"
+];
 
 let scriptEnabled = true;
 
@@ -395,10 +399,18 @@ function onTick () {
       }, 2000);
     });
 
-    bot.on('message', (jsonMsg, position) => {
+        bot.on('message', (jsonMsg, position) => {
       if (position === 'game_info') return;
       const msg = jsonMsg.toString();
-      console.log(`💬 [Makhecha] ${msg}`);
+      
+      // Check if the message contains any of the filtered phrases
+      const isFiltered = CHAT_FILTERS.some(filter => msg.includes(filter));
+      
+      // Only log to console if it's NOT filtered
+      if (!isFiltered) {
+        console.log(`💬 [Makhecha] ${msg}`);
+      }
+
       if (!alive) return;
 
       if (farmingActive && !regrowing && /regrow/i.test(msg)) {
