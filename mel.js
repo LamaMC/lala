@@ -206,7 +206,7 @@ function onTick () {
   const melonOffsets = [
     { dx: -1, dy: 1, dz: 0 },
     { dx: -3, dy: 0, dz: 0 },
-    { dx: -4, dy: 0, dz: 0 }
+    { dx: -3.5, dy: 0, dz: 0 }
   ];
 
   for (const { dx, dy, dz } of melonOffsets) {
