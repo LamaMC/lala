@@ -328,7 +328,7 @@ function onTick () {
             return;
           }
 
-                    if (dropY >= 2 && dropY <= 5) {
+                    if (dropY >= 1 && dropY <= 5) {
             const now = Date.now();
             
             // Check if 10,000 milliseconds (10 seconds) have passed
