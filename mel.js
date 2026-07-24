@@ -309,8 +309,8 @@ function onTick () {
 
           if (dropY >= 3 && dropY <= 5) {
             lastPos = pos.clone();
-            movingRight = !movingRight;
-            const dir = movingRight ? 'right' : 'left';
+            movingLeft = !movingLeft;
+            const dir = movingLeft ? 'right' : 'left';
             console.log(`⬇️ Dropped ${dropY.toFixed(1)} blocks — switching to ${dir}`);
             setMoveDirection(dir);
           } else if (Math.abs(dropY) < 0.5) {
