@@ -308,7 +308,7 @@ function onTick () {
             return;
           }
 
-          if (dropY >= 4 && dropY <= 5) {
+          if (dropY >= 3 && dropY <= 5) {
             lastPos = pos.clone();
             movingRight = !movingRight;
             const dir = movingRight ? 'right' : 'left';
