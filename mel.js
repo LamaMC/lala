@@ -128,7 +128,7 @@ process.on('uncaughtException', err => {
 });
 
 // ── Global config ─────────────────────────────────────────────────────────────
-const HOST         = 'fakepixel.me';
+const HOST         = 'server.fakepixel.me';
 const VERSION      = '1.8.9';
 const WARP_COMMAND = '/warp island';
 
