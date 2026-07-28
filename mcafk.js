@@ -9,7 +9,7 @@ console.warn = (msg, ...args) => {
 
 // ── Config ────────────────────────────────────────────────────────────────
 const HOST = 'fakepixel.me';
-const VERSION = '1.8.9';
+const VERSION = '1.26.2';
 const SKYBLOCK_COMMAND = '/skyblock';
 
 // email = the Microsoft account used to sign in (auth: 'microsoft' below).
