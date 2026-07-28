@@ -85,10 +85,10 @@ function createBot() {
       }
       console.log('✅ Spawned');
       bot.manualQuit = false;
+      
+      // Wait 2 seconds after spawning, then go straight to Skyblock
       setTimeout(() => {
-        if (!alive) return;
-        bot.chat(ACCOUNT.loginCommand);
-        setTimeout(() => { if (alive) goToSkyblock(); }, 2000);
+        if (alive) goToSkyblock();
       }, 2000);
     });
 
