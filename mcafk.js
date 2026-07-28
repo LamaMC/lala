@@ -8,7 +8,7 @@ console.warn = (msg, ...args) => {
 };
 
 // ── Config ────────────────────────────────────────────────────────────────
-const HOST = 'fakepixel.me';
+const HOST = 'hypixel.net';
 const VERSION = '1.26.2';
 const SKYBLOCK_COMMAND = '/skyblock';
 
