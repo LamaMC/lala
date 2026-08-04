@@ -175,7 +175,7 @@ const VERSION      = '1.8.9';
 const WARP_COMMAND = '/warp island';
 
 const FARM_ACCOUNT   = { username: 'Banarsi', loginCommand: '/login 3195' };
-const REGROW_ACCOUNT = { username: 'Enrage',   loginCommand: '/login 3195' };
+const REGROW_ACCOUNT = { username: 'LamaMC',   loginCommand: '/login 3195' };
 
 // Anyone mentioning either name in chat counts as a "ping"
 const PING_NAMES = [FARM_ACCOUNT.username, REGROW_ACCOUNT.username];
