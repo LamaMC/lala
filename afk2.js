@@ -12,7 +12,7 @@ const HOST = 'fakepixel.me';
 const VERSION = '1.8.9';
 const WARP_COMMAND = '/warp island';
 
-const ACCOUNT = { username: 'LamaMC', loginCommand: '/login 3195' };
+const ACCOUNT = { username: 'B2C_', loginCommand: '/login 3043AA' };
 
 // Anyone mentioning this name in chat counts as a "ping"
 const PING_NAMES = [ACCOUNT.username];
