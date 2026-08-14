@@ -10,10 +10,10 @@ console.warn = (msg, ...args) => {
 };
 
 const botConfig = {
-  host: 'server.fakepixel.fun',
-  username: 'DrakonTide',
+  host: 'fakepixel.fun',
+  username: 'Makhecha',
   version: '1.8.9',
-  loginCommand: '/login 3043AA',
+  loginCommand: '/login 3195',
   warpCommand: '/warp spider',
   waypointRadius: 3,
   homeIndex: 11,
